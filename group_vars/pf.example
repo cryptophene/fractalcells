@@ -1,0 +1,5 @@
+---
+ext_if: 'vtnet0'
+ext_ip: '10.0.2.15'
+int_ip: '10.1.0.1'
+int_if: 'lo1'
