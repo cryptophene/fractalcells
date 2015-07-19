@@ -21,13 +21,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
-- hosts: perceivon
-  sudo: true
-  #accelerate: true
-  roles:
-    - comb
-    - certs
-    - cell
-    - postgresql
-    - opensmtpd
-    - openldap
+- name: check if iocage release was fetched 
+  stat:
+    path: '{{ iocage_releases_dir }}/{{ iocage_release_version }}'
+    get_md5: no
+  register: release_dir
+  always_run: true
+  tags: iocage
+

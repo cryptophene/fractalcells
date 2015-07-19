@@ -1,0 +1,94 @@
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+- name: Create cert paths
+  file: path='{{ item.path }}' mode='{{ item.mode }}' state='{{ item.state }}'
+  tags:
+  - certs
+  - proxy
+  # TODO: Turn everything into an NGINX jail.
+  with_items:
+  - { path: '{{ certificate_authority.certificate_directory }}/proxy', mode: 755 , state: directory }
+  - { path: '{{ certificate_authority.certificate_directory }}/proxy/certs', mode: 755 , state: directory }
+  - { path: '{{ certificate_authority.certificate_directory }}/proxy/crl', mode: 755, state: directory }
+  - { path: '{{ certificate_authority.certificate_directory }}/proxy/newcerts', mode: 755, state: directory }
+  - { path: '{{ certificate_authority.certificate_directory }}/proxy/private', mode: 700, state: directory }
+  - { path: '{{ certificate_authority.certificate_directory }}/proxy/index.txt', mode: 755, state: touch }
+  - { path: '{{ certificate_authority.certificate_directory }}/proxy/serial', mode: 755, state: touch }
+
+- shell: echo 1000 > '{{ certificate_authority.certificate_directory }}/proxy/serial' 
+  tags:
+  - proxy
+  - certs
+
+- name: Check if Proxy key exists
+  stat: path={{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem
+  register: proxy_tls_key
+  tags:
+  - proxy
+  - certs
+- name: Generate Proxy TLS key
+  shell: openssl genrsa -out '{{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem' {{ certificate_authority.intermediate_ca_default_bits }}
+  when: not proxy_tls_key.stat.exists
+  tags:
+  - proxy
+  - certs
+
+- name: Check if Proxy CSR exists
+  stat: path={{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem
+  register: proxy_tls_csr
+  tags:
+  - proxy
+  - certs
+
+- name: Generate Proxy TLS CSR
+  shell: openssl req -config '/root/intermediate_ca_req.cnf' -key '{{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem'  -new -sha256 -out '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem'
+  when: not proxy_tls_csr.stat.exists
+  tags:
+  - proxy
+  - certs
+
+- name: Check if Proxy Cert exists
+  stat: path={{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.cert.pem
+  register: proxy_tls_csr
+  tags:
+  - certs
+  - proxy
+
+- name: Sign Proxy TLS cert
+  shell: yes | openssl ca -config '/root/intermediate_ca_req.cnf' -extensions server_cert -days 375 -notext -md sha256 -in '/{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem' -out '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name}}_proxy.cert.pem' -passin 'pass:{{ certificate_authority.intermediate_ca_output_password }}'
+  when: not proxy_tls_csr.stat.exists
+  tags:
+  - certs
+  - proxy
+
+- name: Make Proxy Key, CSR and Cert readonly
+  file: path={{ item.path }} state=file mode={{ item.mode }}
+  tags:
+  - certs
+  - proxy
+  with_items:
+          - { path: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.cert.pem', mode: 444  }
+          - { path: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem', mode: 444  }
+          - { path: '{{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem', mode: 400  }
+

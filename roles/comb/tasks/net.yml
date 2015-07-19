@@ -21,13 +21,24 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
-- hosts: perceivon
-  sudo: true
-  #accelerate: true
-  roles:
-    - comb
-    - certs
-    - cell
-    - postgresql
-    - opensmtpd
-    - openldap
+- name: Configure jails network interface
+  lineinfile:
+    dest: '/etc/rc.conf'
+    state: present
+    line: "cloned_interfaces=\"{{ internal_interface }}\""
+  register: cloned_interfaces
+
+- name: Create jails network interface
+  command: service netif cloneup
+  when: cloned_interfaces.changed
+
+- name: Configure internal ip on jails network interface
+  lineinfile:
+    dest: '/etc/rc.conf'
+    state: present
+    line: 'ifconfig_{{ internal_interface }}=\"inet {{ internal_ip }} netmask 255.255.255.255\"'
+  register: internal_ip_output
+
+# 10.1 netif calls routing which is broken for loopback devices
+- name: Add internal ip to jails network interface
+  shell: service netif restart lo1 || true

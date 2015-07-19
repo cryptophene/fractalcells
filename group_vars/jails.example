@@ -1,0 +1,40 @@
+---
+production_jails: 
+  template:
+    hostname:  'template'
+    interface:      'lo1'
+    ip:             '10.1.0.4'
+    tag:            'template_'
+    pkgs:
+    - ca_root_nss
+    - python27
+    - sudo
+    - tmux
+    - vim-lite
+    - zsh
+  postgresql:
+    hostname:  'db'
+    interface: 'lo1'
+    ip:        '10.1.0.5'
+    tag:       'db'
+    pkgs:
+    - postgresql94-client
+    - postgresql94-server
+    - postgresql94-contrib
+  openldap:
+    hostname:  'auth'
+    interface: 'lo1'
+    ip:        '10.1.0.6'
+    tag:       'auth'
+    pkgs:
+    - openldap-server
+    - openldap-client
+    - ca_root_nss
+  opensmtpd:
+    hostname:  'mx'
+    interface: 'lo1'
+    ip:        '10.1.0.7'
+    tag:       'mx'
+    pkgs:
+    - opensmtpd-devel
+    - ca_root_nss

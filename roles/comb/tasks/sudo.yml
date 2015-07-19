@@ -20,14 +20,12 @@
 # ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# (c) 2013 Julien DAUPHANT
+# 2-clause BSD
+# Origin: https://github.com/jdauphant/ansible-freebsd-playbooks/blob/master/roles/common_fb_host/tasks/main.yml#L23
 ---
-- hosts: perceivon
-  sudo: true
-  #accelerate: true
-  roles:
-    - comb
-    - certs
-    - cell
-    - postgresql
-    - opensmtpd
-    - openldap
+ - name: Install sudo
+   pkgng: name=sudo state=present
+
+ - name: Deploy sudoers file
+   copy: src=sudoers dest=/usr/local/etc/sudoers validate='visudo -cf %s'

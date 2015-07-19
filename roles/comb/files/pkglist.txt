@@ -1,0 +1,6 @@
+ca_root_nss
+python27
+sudo
+tmux
+vim-lite
+zsh

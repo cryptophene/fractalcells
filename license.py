@@ -1,4 +1,13 @@
-# Copyright 2015, Perceivon Hosting Inc.
+#!/usr/local/bin/python2.7
+
+# Useful script to add copyright notices all over the place.
+# used like so:
+# find . -name \*.yml -exec ./license.py {} \;
+
+
+import sys
+
+LICENSE ="""# Copyright 2015, Perceivon Hosting Inc.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -20,14 +29,19 @@
 # ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
----
-- hosts: perceivon
-  sudo: true
-  #accelerate: true
-  roles:
-    - comb
-    - certs
-    - cell
-    - postgresql
-    - opensmtpd
-    - openldap
+"""
+
+
+
+
+def license_magic(foo=''):
+    with open(foo, 'r') as f:
+        old_text = f.readlines()
+
+    new_text = LICENSE + "".join(old_text)
+        
+    with open(foo, 'w') as f:
+        read_data = f.write(new_text)
+
+if __name__=='__main__':
+    license_magic(sys.argv[1])

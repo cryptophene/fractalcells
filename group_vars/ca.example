@@ -1,0 +1,15 @@
+---
+certificate_directory:                          /usr/local/share/certs/ca
+  short_name:               'foobar'
+  root_ca_output_password:          'supersecr1t
+  root_ca_default_bits:             4096
+  intermediate_ca_output_password:          'secr1t'
+  intermediate_ca_default_bits:             4096
+  country:                  'US'
+  state:                    'CA'
+  locality:                 'Palo Alto'
+  organization:             'your company'
+  organizational_unit:      'your company Certificate Authority'
+  common_name:              'you'
+  email_address:            'ca@domain.tld'
+  challenge_password:       'secr1t'

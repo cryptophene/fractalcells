@@ -1,0 +1,144 @@
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+- name: Deploy cert configuration
+  template: src='{{ item.name }}.j2' dest='/root/{{ item.name }}.cnf' mode=0640
+  tags:
+  - certs
+  - certs-debug
+  with_items:
+  - { name: 'root_ca_req' }
+  - { name: 'intermediate_ca_req' }
+- name: Create cert paths
+  file: path={{ item.path }} mode={{ item.mode }} state={{ item.state }}
+  tags:
+  - certs
+  with_items:
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/root/certs', mode: 755 , state: directory}
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/root/crl', mode: 755, state: directory }
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/root/newcerts', mode: 755, state: directory }
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/root/private', mode: 700, state: directory }
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/root/index.txt', mode: 755, state: touch }
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/root/serial', mode: 755, state: touch }
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/intermediate/certs', mode: 755 , state: directory}
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/intermediate/crl', mode: 755, state: directory }
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/intermediate/newcerts', mode: 755, state: directory }
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/intermediate/private', mode: 700, state: directory }
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/intermediate/index.txt', mode: 755, state: touch }
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/intermediate/serial', mode: 755, state: touch }
+
+- name: Check if root serial exists
+  stat: path={{ certificate_authority.certificate_directory }}/ca/root/serial
+  register: root_ca_serial
+  tags:
+  - certs
+- name: Check if intermediate serial exists
+  stat: path={{ certificate_authority.certificate_directory }}/ca/root/serial
+  register: intermediate_ca_serial
+  tags:
+  - certs
+- shell: echo 1000 > '{{ certificate_authority.certificate_directory }}/ca/root/serial'
+  when: not root_ca_serial.stat.exists
+  tags:
+  - certs
+- shell: echo 1000 > '{{ certificate_authority.certificate_directory }}/ca/intermediate/serial'
+  when: not intermediate_ca_serial.stat.exists
+  tags:
+  - certs
+
+- name: Check if Root CA Key exists
+  stat: path={{ certificate_authority.certificate_directory }}/ca/root/private/{{ certificate_authority.short_name }}_ca.key.pem
+  register: root_ca_key
+  tags:
+  - certs
+- name: Generate Root CA Key
+  shell: openssl genrsa -aes256 -passout 'pass:{{ certificate_authority.root_ca_output_password }}' -out {{ certificate_authority.certificate_directory }}/ca/root/private/{{ certificate_authority.short_name }}_ca.key.pem 4096
+  when: not root_ca_key.stat.exists
+  tags:
+  - certs
+- name: Check if Root CA Cert exists
+  stat: path={{ certificate_authority.certificate_directory }}/ca/root/certs/{{ certificate_authority.short_name }}_ca.cert.pem
+  register: root_ca_cert
+  tags:
+  - certs
+
+- name: Generate Root Certificate
+  shell: openssl req -config /root/root_ca_req.cnf -key {{ certificate_authority.certificate_directory }}/ca/root/private/{{ certificate_authority.short_name }}_ca.key.pem -passin 'pass:{{ certificate_authority.root_ca_output_password }}' -new -x509 -days 7300 -sha256 -extensions v3_ca
+                          -out {{ certificate_authority.certificate_directory }}/ca/root/certs/{{ certificate_authority.short_name }}_ca.cert.pem
+  when: not root_ca_cert.stat.exists
+  tags:
+  - certs
+
+- name: Make Root Certificate and Key Readonly
+  file: path={{ item.path }} state=file mode={{ item.mode }}
+  tags:
+  - certs
+  with_items:
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/root/certs/{{ certificate_authority.short_name }}_ca.cert.pem', mode: 444  }
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/root/private/{{ certificate_authority.short_name }}_ca.key.pem', mode: 444  }
+
+- name: Verify Root Certificate
+  shell: openssl x509 -noout -text -in {{ certificate_authority.certificate_directory }}/ca/root/certs/{{ certificate_authority.short_name }}_ca.cert.pem
+  tags:
+  - certs
+
+  # Intermediate CA things
+- name: Check if Intermediate CA key exists
+  stat: path={{ certificate_authority.certificate_directory }}/ca/intermediate/private/{{ certificate_authority.short_name }}_ca.key.pem
+  register: intermediate_ca_key
+  tags:
+  - certs
+- name: Generate Intermediate key
+  shell: openssl genrsa -aes256 -passout 'pass:{{ certificate_authority.intermediate_ca_output_password }}' -out {{ certificate_authority.certificate_directory }}/ca/intermediate/private/{{ certificate_authority.short_name }}_ca.key.pem 4096
+  when: not intermediate_ca_key.stat.exists
+  tags:
+  - certs
+- name: Check if Intermediate CA Cert exists
+  stat: path={{ certificate_authority.certificate_directory }}/ca/intermediate/certs/{{ certificate_authority.short_name }}_ca.cert.pem
+  register: intermediate_ca_cert
+  tags:
+  - certs
+
+- name: Generate Intermediate Certificate
+  shell: openssl req -config /root/intermediate_ca_req.cnf -key {{ certificate_authority.certificate_directory }}/ca/intermediate/private/{{ certificate_authority.short_name }}_ca.key.pem -passin 'pass:{{ certificate_authority.intermediate_ca_output_password }}' -new -x509 -days 7300 -sha256 -extensions v3_ca
+                          -out {{ certificate_authority.certificate_directory }}/ca/intermediate/certs/{{ certificate_authority.short_name }}_ca.cert.pem
+  when: not intermediate_ca_cert.stat.exists
+  tags:
+  - certs
+
+- name: Make Intermediate Certificate and Key Readonly
+  file: path={{ item.path }} state=file mode={{ item.mode }}
+  tags:
+  - certs
+  with_items:
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/intermediate/certs/{{ certificate_authority.short_name }}_ca.cert.pem', mode: 444  }
+          - { path: '{{ certificate_authority.certificate_directory }}/ca/intermediate/private/{{ certificate_authority.short_name }}_ca.key.pem', mode: 444  }
+
+- name: Verify Intermediate Certificate
+  shell: openssl x509 -noout -text -in {{ certificate_authority.certificate_directory }}/ca/intermediate/certs/{{ certificate_authority.short_name }}_ca.cert.pem
+  tags:
+  - certs
+- name: Generate Certificate Chain File
+  shell: cat {{ certificate_authority.certificate_directory }}/ca/intermediate/certs/{{ certificate_authority.short_name }}_ca.cert.pem  {{ certificate_authority.certificate_directory }}/ca/root/certs/{{ certificate_authority.short_name }}_ca.cert.pem > {{ certificate_authority.certificate_directory }}/ca/intermediate/certs/ca-chain.cert.pem
+  tags:
+  - certs

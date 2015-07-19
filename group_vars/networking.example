@@ -1,0 +1,13 @@
+---
+external_interface:	'vtnet0'
+external_ip:		'10.0.2.15'
+external_available_ports: 80,443
+
+internal_ip:		'10.1.0.1'
+internal_interface:	'lo1'
+internal_netmask:	'10.1.0.0/24'
+
+host_sshd_port:		22
+
+external_domain:	'domain.tld'
+hostname:		foo

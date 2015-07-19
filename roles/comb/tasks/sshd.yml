@@ -20,14 +20,16 @@
 # ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# (c) 2013 Julien DAUPHANT
+# (c) 2015 Johannes Jost Meixner
+# 2-clause BSD
+# Origin: https://github.com/jdauphant/ansible-freebsd-playbooks/blob/master/roles/common_fb_host/tasks/main.yml#L2
 ---
-- hosts: perceivon
-  sudo: true
-  #accelerate: true
-  roles:
-    - comb
-    - certs
-    - cell
-    - postgresql
-    - opensmtpd
-    - openldap
+ - name: Deploy ssh configuration
+   template: src=sshd_config.j2 dest=/etc/ssh/sshd_config
+   notify: restart sshd
+   tags: 
+   - sshd
+   - debug
+
+

@@ -1,0 +1,5 @@
+group_name:		'your group'
+user_handle:		'your handle'
+user_name:		'your full name'
+user_groups:		your group,wheel
+user_shell:		'/usr/local/bin/zsh'

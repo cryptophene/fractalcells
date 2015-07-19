@@ -1,6 +1,0 @@
----
- - include: net.yml tags=net,host
- - include: pf.yml tags=pf,host
- - include: iocage.yml tags=iocage,host
-# - include: tarsnap.yml tags=host
-

@@ -1,0 +1,18 @@
+
+- name: Append unbound settings to rc.conf
+  lineinfile: dest=/etc/rc.conf line={{ item.line }}
+  with_items:
+          - { line: "local_unbound_enable=\"YES\"" }
+  tags:
+  - dns
+  - unbound
+- name: Deploy unbound.conf
+  template: src='unbound.conf.j2' dest='/var/unbound/unbound.conf' mode=0644
+  tags: 
+  - dns
+  - unbound
+- name: restart unbound
+  service: name=local_unbound state=restarted
+  tags:
+  - dns
+  - unbound

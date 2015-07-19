@@ -1,0 +1,119 @@
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+- name: Test if OpenLDAP jail is started
+  tags:
+  - ldap
+  - auth
+  shell: /usr/local/sbin/iocage list | awk '/{{ openldap_jail_uuid.stdout.strip() }}/ {print $4}'
+  register: openldap_jail_started
+
+- name: Start OpenLDAP jail
+  tags:
+  - ldap
+  - auth
+  shell: /usr/local/sbin/iocage start {{ openldap_jail_uuid.stdout.strip() }}
+  when: openldap_jail_started.stdout.strip() != "up"
+  register: openldap_jail_started
+
+- assert:
+    that:
+      - openldap_jail_started|success
+
+- name: Install OpenLDAP 2.4
+  when: openldap_jail_started|success
+  run_once: true
+  shell: "iocage exec -u root {{ production_jails.openldap.tag }} /bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.openldap.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.openldap.tag }}"
+  tags:
+  - ldap
+  - auth
+
+#- name: Deploy OpenLDAP config files
+#  when: openldap_jail_started|success
+#  template: src='{{ item.name }}.j2' dest='{{ openldap_jail_root }}/{{ item.path }}/{{ item.name }}' mode=0644
+#  with_items:
+#          #- { name: "pg_hba.conf", path: "/usr/local/etc", mode: 644 }
+#          #- { name: "postgresql.conf", path: "/usr/local/etc", mode: 644 }
+#  register: openldap_config_deployed
+#  tags:
+#  - ldap
+#  - auth
+#
+- name: Enable OpenLDAP service
+  when: openldap_jail_started|success
+  lineinfile: dest={{ openldap_jail_root.stdout.strip() }}/etc/rc.conf state=present insertafter=EOF line="openldap_enable=\"YES\""
+  tags:
+  - ldap
+  - auth
+
+- name: Create directories
+  file: path={{ item.path }} state=directory mode={{ item.mode }}
+  tags:
+  - ldap
+  - auth
+  - certs
+  with_items:
+          - { path: '{{ openldap_jail_root.stdout.strip() }}/var/db/openldap-data', mode: '755' }
+          - { path: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private', mode: '700' }
+
+
+#
+#- name: Initialize OpenLDAP 9.4
+#  when: openldap_jail_started|success
+#  shell: iocage exec -u root {{ production_jails.openldap.tag }} /bin/sh -c "service openldap initdb"
+#  tags:
+#  - ldap
+#  - auth
+#- name: start openldap
+#  shell: iocage exec {{ openldap_jail_uuid.stdout.strip() }} /bin/sh -c "service  start"
+#  tags:
+#  - debug
+#  - ldap
+#  - pgsql-debug
+#
+- name: Copy Proxy Key, CSR and Cert to the {{ production_jails.openldap.tag }} jail
+  shell: cp -a {{ item.origin }} {{ item.destination }}
+  tags:
+  - ldap
+  - auth
+  - certs
+  with_items:
+          - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.cert.pem', destination: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem'  
+}
+
+          - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem', destination: '{{  openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.csr.pem'  
+}
+          - { origin: '{{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem', destination: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.key.pem' 
+ }
+
+
+- name: Make Proxy Key, CSR and Cert readonly
+  file: path={{ item.path }} state=file mode={{ item.mode }}
+  tags:
+  - ldap
+  - auth
+  - certs
+  with_items:
+          - { path: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem', mode: 444  }
+          - { path: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.csr.pem', mode: 444  }
+          - { path: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.key.pem', mode: 400  }

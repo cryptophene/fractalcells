@@ -1,0 +1,92 @@
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+- name: Check if zpool is configured for iocage
+  shell: /sbin/zpool get -H -o value comment {{ iocage_zpool }}
+  changed_when: true
+  register: zpool_comment
+  always_run: true
+  tags: iocage
+  notify: check if iocage release was fetched
+
+- name: Mark zpool for iocage usage
+  command: /sbin/zpool set comment=iocage {{ iocage_zpool }}
+  when: zpool_comment.stdout.find("^-$") > 0
+  tags: iocage
+
+- name: Install iocage
+  tags: iocage
+  pkgng:
+    name: iocage
+    state: present
+
+
+- name: Check if we can skip downloading the release
+  stat: path='{{ iocage_releases_dir }}/{{ iocage_release_version }}'
+  register: release_dir
+
+- name: Fetch FreeBSD release {{ iocage_release_version }}
+  shell: echo "{{ iocage_release_version }}" | /usr/local/sbin/iocage fetch ftpfiles="base.txz src.txz"
+  when: release_dir.stat.isdir is undefined
+  tags: iocage
+
+- name: Check if it is now present
+  stat: path='{{ iocage_releases_dir }}/{{ iocage_release_version }}'
+  when: release_dir.stat.isdir is undefined
+  tags:
+    - iocage
+    - iocage-debug
+  register: release_dir
+
+# FIXME: broken
+#- assert:
+#    that:
+#     - release_dir.stat.exists
+#     - release_dir.stat.isdir
+#  tags:
+#    - iocage
+#    - iocage-debug
+
+- name: Check if basejail already exists
+  shell: /usr/local/sbin/iocage list | awk '/basejail_{{ iocage_release_version }}/ {print $2}'
+  register: basejail_uuid
+  tags:
+  - iocage-jails
+
+- name: Create FreeBSD {{ iocage_release_version }} basejail
+  shell: iocage create -b tag=basejail_{{ iocage_release_version }}
+  when: not (basejail_dir.stdout.strip() != "")
+  tags: iocage
+  notify: check if iocage release was fetched
+
+- name: Create pkglist file
+  tags: iocage
+  copy:
+    src: pkglist.txt
+    dest: '{{ iocage_jails_dir }}/pkglist.txt'
+
+- name: Enable iocage service
+  tags: iocage
+  service:
+    name: iocage
+    enabled: true

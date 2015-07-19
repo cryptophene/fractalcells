@@ -1,3 +1,0 @@
----
-- name: reload sshd
-  command: service sshd reload

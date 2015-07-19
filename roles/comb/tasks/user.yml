@@ -21,13 +21,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
-- hosts: perceivon
-  sudo: true
-  #accelerate: true
-  roles:
-    - comb
-    - certs
-    - cell
-    - postgresql
-    - opensmtpd
-    - openldap
+ - name: Install privileged user
+   user: name={{ user_handle }} shell={{ user_shell }} groups={{ user_groups }} append=yes
+ - name: Deploy authorized key
+   authorized_key: user={{ user_handle}}  key='{{ ssh_pub_key }}' state=present exclusive=yes
+

@@ -1,0 +1,6 @@
+# DON'T TOUCH THIS.
+# smtpd cell needs fudging.
+::1                     localhost localhost.my.domain
+127.0.0.1               localhost localhost.my.domain
+{{ production_jails.opensmtpd.ip }}  {{ opensmtpd_jail_uuid.stdout.strip() }}
+

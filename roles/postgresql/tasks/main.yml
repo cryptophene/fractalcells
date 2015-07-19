@@ -21,13 +21,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
-- hosts: perceivon
-  sudo: true
-  #accelerate: true
-  roles:
-    - comb
-    - certs
-    - cell
-    - postgresql
-    - opensmtpd
-    - openldap
+- include: iocage.yml
+- include: pgsql.yml
+# XXX: Take care of sshd
+# - include: net.yml
+# - include: pf.yml
+# - include: sshd.yml
+# - include: user.yml

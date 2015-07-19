@@ -1,45 +1,63 @@
-# Ansible/FreeBSD/iocage
+# fractalcells
 
-It's still work in progress.
+Launch: 2015-07-24
 
-Simple demo project. Shows how to use Ansible and iocage to set up
-a FreeBSD jail server.
+Documentation to be improved.
 
 ## Requirements
 
-You need to have to following software installed.
+You may want to use the following software, and know your way around them before evaluating
+`fractalcells || hosting singularity':
 
+1. FreeBSD
+1. One ZFS pool.
 1. Ansible
-1. VirtualBox
 
 ## Howto
 
-    git clone https://github.com/JoergFiedler/freebsd-ansible-demo.git
-    cd freebsdd-ansible-demo
-    vagrant up
+```
+    git clone https://bitbucket.org/fractalcells/fractalcells.git
+    cd fractalcells
+    cat host_vars/*.example > host_vars/your_firm_name
+    vim host_vars/your_firm_name 		# edit all the things
+    cp hosts.example > hosts
+    vim hosts 					# edit all the things
+    ansible-playbook -i hosts site.yml --check
+    ansible-playbook -i hosts site.yml
+```
+Then, do this:
 
-After the instance is provisioned you have to restart it.
+```
+    backup and remove the root private keyfrom the {{ certificate_authority }}/root/private directory
+    dump on usb key
+    lock in safe
+    bury safe in garden
+    protect safe with dog.
+```
 
-Login into the jail host.
+If you know what you're doing: you're done now.
+If not: we do offer paid support.
 
-    vagrant ssh
-
-or
-
-    ssh -F ssh-config 10.1.0.1
 
 ## Next Steps
 
-1. Remove reboot step
-1. Complete documentation (draw the big picture)
-1. Synchronize Vagrant/Ansible configuration
-1. Create other jails (web, dns, mail)
-1. Create configuration to recreate this instance on EC2 
+1. Do all the things.
 
 ## Powered By
 
+(Implemented already)
+
 1. [FreeBSD](https://www.freebsd.org)
+1. [ansible](https://www.ansible.com)
 1. [iocage](https://github.com/pannon/iocage)
-1. [VirtualBox](https://www.virtualbox.org)
-1. [Ansible](http://www.ansible.com)
-1. [Vagrant](https://www.vagrantup.com)
+1. [OpenSMTPD](https://www.opensmtpd.org)
+1. [PostgreSQL](https://www.postgresql.org)
+1. [OpenLDAP](https://www.openldap.org)
+
+(Work in Progress)
+
+1. [OpenVPN](https://www.openvpn.org)
+1. [Redmine](https://www.redmine.org)
+1. [Zabbix](https://www.zabbix.org)
+1. [GitLab](https://www.gitlab.org)
+1. [Jenkins](https://www.jenkins-ci.org)

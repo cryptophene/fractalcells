@@ -20,14 +20,33 @@
 # ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
----
-- hosts: perceivon
-  sudo: true
-  #accelerate: true
-  roles:
-    - comb
-    - certs
-    - cell
-    - postgresql
-    - opensmtpd
-    - openldap
+- name: Append pf settings to rc.conf
+  lineinfile: dest=/etc/rc.conf line={{ item.line }}
+  with_items:
+          - { line: "kld_list=\"pf\"" }
+          - { line: "pf_enable=\"YES\"" }
+  tags:
+  - pf
+
+- name: Check if pf is already loaded
+  shell:  kldstat -q -m pf
+  register: module_pf_loaded
+  ignore_errors: yes
+  tags:
+   - pf
+#- name: debug pf_nat_loaded
+#  debug: var=pf_nat_loaded
+#  tags:
+#   - pf
+- name: Load pf_nat
+  shell: kldload pf
+  when: module_pf_loaded|failed
+  tags:
+   - pf
+- name: Deploy pf.conf
+  template: src='pf.conf.j2' dest='/etc/pf.conf' mode=0640
+  run_once: true
+  tags: 
+  - pf
+  - pf-debug
+  #notify: restart pf

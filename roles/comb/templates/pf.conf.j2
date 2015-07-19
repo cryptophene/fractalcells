@@ -1,0 +1,21 @@
+public_ip="{{ external_ip }}"
+
+ext_if="xn0"
+
+table <jails> { {{ internal_netmask }} }
+
+#table <sshguard> persist
+#table <known_attackers> persist
+#table <ssh-whiteout> persist
+
+### #######
+# nat and rdr for jails
+### #######
+
+scrub in all
+
+nat pass log on $ext_if inet proto { tcp, udp, icmp } from <jails> to any -> $public_ip
+
+{% for jail in production_jails if production_jails[jail].pf is defined %}
+rdr pass log on $ext_if proto { {{ production_jails[jail].pf.proto }} } from any to $public_ip port { {{ production_jails[jail].pf.ports }} } -> {{ production_jails[jail].ip }}
+{% endfor %}

@@ -20,14 +20,35 @@
 # ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
----
-- hosts: perceivon
-  sudo: true
-  #accelerate: true
-  roles:
-    - comb
-    - certs
-    - cell
-    - postgresql
-    - opensmtpd
-    - openldap
+- name: Append ipfw settings to rc.conf
+  lineinfile: dest=/etc/rc.conf line={{ item.line }}
+  with_items:
+          - { line: "kld_list=\"ipfw_nat\"" }
+          - { line: "firewall_enable=\"YES\"" }
+          - { line: "firewall_type=\"UNKNOWN\"" }
+          - { line: "firewall_script=\"/etc/ipfw.rules\"" }
+          - { line: "firewall_logif=\"YES\"" }
+  tags:
+  - ipfw
+
+- name: Check if ipfw_nat is already loaded
+  shell:  kldstat -q -m ipfw_nat
+  register: ipfw_nat_loaded
+  ignore_errors: yes
+  tags:
+   - ipfw
+#- name: debug ipfw_nat_loaded
+#  debug: var=ipfw_nat_loaded
+#  tags:
+#   - ipfw
+- name: Load ipfw_nat
+  shell: kldload ipfw_nat
+  when: ipfw_nat_loaded|failed
+  tags:
+   - ipfw
+- name: Deploy ipfw.rules
+  template: src='ipfw.rules.j2' dest='/etc/ipfw.rules' mode=0640
+  tags: 
+  - ipfw
+  - ipfw-debug
+  notify: restart ipfw

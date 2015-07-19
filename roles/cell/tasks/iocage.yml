@@ -1,0 +1,129 @@
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+- name: basejail uuid
+  shell: /usr/local/sbin/iocage list | awk '/basejail_{{ iocage_release_version }}/ {print $2}'
+  register: basejail_uuid
+  tags:
+  - iocage-template
+  - iocage-jails
+
+#- name: debug basejail_uuid
+#  debug: var=basejail_uuid
+#  tags:
+#  - iocage-jails
+
+- name: Check if template jail already exists
+  shell: /usr/local/sbin/iocage list | awk '/template_{{ iocage_release_version }}/ {print $2}'
+  register: template_jail_uuid
+  tags:
+  - iocage-template
+  - iocage-jails
+
+- name: Create template
+  shell: /usr/local/sbin/iocage clone {{ basejail_uuid.stdout.strip() }} tag=template_{{ iocage_release_version }} pkglist={{ iocage_jails_dir }}/pkglist.txt ip4_addr="{{ production_jails.template.interface }}|{{ production_jails.template.ip }}" resolver='nameserver {{ internal_ip }}'
+  tags:
+  - iocage-jails
+  - iocage-template
+  when:
+  - basejail_uuid.stdout and (not template_jail_uuid.stdout != "")
+
+- name: template uuid
+  shell: /usr/local/sbin/iocage list | awk '/template_{{ iocage_release_version }}/ {print $2}'
+  register: template_uuid
+  tags:
+  - iocage-jails
+  - iocage-template
+  - iocage-template-uuid
+
+- assert:
+    that:
+     - template_uuid is defined and template_uuid.stdout.strip() != ""
+
+- name: Test if template jail is started
+  tags:
+  - iocage-jails
+  - iocage-template
+  shell: /usr/local/sbin/iocage list | awk '/template_{{ iocage_release_version }}/ {print $4}'
+  register: template_jail_started
+
+
+- name: Start template jail
+  tags:
+  - iocage-jails
+  - iocage-template
+  shell: /usr/local/sbin/iocage start {{ template_uuid.stdout.strip() }}
+  when: "template_jail_started.stdout.strip() != 'up'"
+  register: template_jail_started
+
+- assert:
+    that:
+      - template_jail_started|success
+
+- name: Check if template jail needs pkg bootstrap
+  stat: path=/iocage/jails/{{ template_uuid.stdout.strip() }}/root/var/db/pkg/local.sqlite
+  register: template_jail_pkgdb
+  run_once: true
+  tags:
+  - iocage-jails
+  - iocage-template
+
+- name: Bootstrap pkg for template jail
+  shell: /usr/local/sbin/iocage exec -u root {{ template_uuid.stdout.strip() }} /bin/sh -c "ASSUME_ALWAYS_YES=yes /usr/sbin/pkg bootstrap -f && /usr/local/sbin/pkg update -f"
+  when:
+  - template_jail_started|success
+  #- template_jail_pkgdb is not defined
+  #- not template_jail_pkgdb.stat.exists
+  run_once: true
+  tags:
+  - iocage-jails
+  - iocage-template
+
+- name: Install all the things
+  run_once: true
+  when:
+  - template_jail_started|success
+  #- template_jail_pkgdb is not defined
+  #- not template_jail_pkgdb.stat.exists
+  shell: iocage exec -u root {{ production_jails.template.tag }}{{ iocage_release_version }} /bin/sh -c "ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.template.pkgs | join(' ') }} | tee -a /var/log/pkg.log.{{ production_jails.template.tag }}{{ iocage_release_version }}"
+  tags:
+  - iocage-jails
+  - iocage-template
+
+- name: Test if template jail is still started
+  tags:
+  - iocage-jails
+  - iocage-template
+  shell: /usr/local/sbin/iocage list | awk '/template_{{ iocage_release_version }}/ {print $4}'
+  register: template_jail_started
+
+- name: Stop template jail
+  tags:
+  - iocage-jails
+  - iocage-template
+  shell: /usr/local/sbin/iocage stop {{ template_uuid.stdout.strip() }}
+  when: "template_jail_started.stdout.strip() == 'up'"
+  register: template_jail_started
+
+
+# Create infrastructure jails in the 'jail' role!
