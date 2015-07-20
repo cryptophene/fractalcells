@@ -49,4 +49,4 @@
   tags: 
   - pf
   - pf-debug
-  #notify: restart pf
+  notify: reload pf
