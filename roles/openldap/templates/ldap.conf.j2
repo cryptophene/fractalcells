@@ -6,7 +6,7 @@
 # This file should be world readable but not world writable.
 
 BASE	dc={{ external_domain.split('.') | join(',dc=') }}
-URI	ldap://{{ production_jails.openldap.hostname }}.{{ external_domain }}
+URI	ldap://{{ production_jails.openldap.hostname }}.{{ external_domain }} ldaps://{{ production_jails.openldap.hostname }}.{{ external_domain }} ldap://{{ production_jails.openldap.ip }} ldaps://{{ production_jails.openldap.ip }}/
 
 #TLS_CACERT "/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem"
 #TLS_CIPHER_SUITE {{ openssl.ciphers }}
