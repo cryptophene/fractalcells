@@ -1,0 +1,3 @@
+---
+openldap_data:
+  password_hash:    '{SHA}secret'
