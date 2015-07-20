@@ -24,6 +24,7 @@
 - name: Test if OpenLDAP jail is started
   tags:
   - ldap
+  - ldap-service
   - auth
   shell: /usr/local/sbin/iocage list | awk '/{{ openldap_jail_uuid.stdout.strip() }}/ {print $4}'
   register: openldap_jail_started
@@ -50,9 +51,13 @@
 
 - name: Enable OpenLDAP service
   when: openldap_jail_started|success
-  lineinfile: dest={{ openldap_jail_root.stdout.strip() }}/etc/rc.conf state=present insertafter=EOF line="slapd_enable=\"YES\""
+  lineinfile: dest={{ openldap_jail_root.stdout.strip() }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
+  with_items:
+  - { line: "slapd_enable=\"YES\"" }
+  - { line: "slapd_flags='-h \\\"ldapi:///var/run/openldap/ldapi/ ldap://0.0.0.0/ ldaps://0.0.0.0/\\\"'" }
   tags:
   - ldap
+  - ldap-service
   - auth
 
 - name: Create directories
@@ -61,7 +66,7 @@
   - ldap
   - auth
   - certs
-  - ldap-debug
+  - ldap-service
   with_items:
   - { path: '{{ openldap_jail_root.stdout.strip() }}/var/db/openldap-data', mode: '755', owner: 389, group: 389 }
   - { path: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private', mode: '700', owner: 389, group: 389 }
@@ -76,7 +81,7 @@
   #- { name: "postgresql.conf", path: "/usr/local/etc", mode: 644 }
   register: openldap_config_deployed
   tags:
-  - ldap-debug
+  - ldap-service
   - ldap
   - debug
   - auth
@@ -93,7 +98,7 @@
   - ldap
   - auth
   - certs
-  - ldap-debug
+  - ldap-service
   with_items:
   - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.cert.pem', destination: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem' }
   - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem', destination: '{{  openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.csr.pem' }
@@ -105,7 +110,7 @@
   tags:
   - ldap
   - auth
-  - ldap-debug
+  - ldap-service
   - certs
   with_items:
   - { path: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem', mode: 444, owner: 389, group: 389 }
@@ -117,6 +122,6 @@
   shell: iocage exec -u root {{ openldap_jail_uuid.stdout.strip() }} /bin/sh -c "service slapd restart"
   tags:
   - ldap
-  - ldap-debug
+  - ldap-service
   - auth
 

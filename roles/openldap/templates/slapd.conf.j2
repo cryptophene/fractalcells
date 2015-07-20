@@ -44,7 +44,7 @@ index   objectClass     eq
 # FIXME: broken!!!
 TLSCipherSuite {{ openssl.ciphers }}
 TLSCertificateFile /usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem
-TLSCertificateKeyFile /usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem
+TLSCertificateKeyFile /usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.key.pem
 TLSCACertificateFile "/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem"
 
 # lock password stuff down.
