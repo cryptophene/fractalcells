@@ -2,7 +2,10 @@
 
 Launch: 2015-07-24
 
-Documentation to be improved.
+Documentation: to be written^Wimproved.
+
+Please see [the Fractal cells website](http://www.fractalcells.com) for the "Why" and "What".
+This README is, for the time being, exclusively about the "How"
 
 ## Requirements
 
