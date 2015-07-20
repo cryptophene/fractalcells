@@ -8,8 +8,8 @@
 BASE	dc={{ external_domain.split('.') | join(',dc=') }}
 URI	ldap://{{ production_jails.openldap.hostname }}.{{ external_domain }}
 
-TLS_CACERT /usr/local/share/certs/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem
-TLS_CIPHER_SUITE {{ openssl.ciphers }}
+#TLS_CACERT "/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem"
+#TLS_CIPHER_SUITE {{ openssl.ciphers }}
 
 #SIZELIMIT	12
 #TIMELIMIT	15
