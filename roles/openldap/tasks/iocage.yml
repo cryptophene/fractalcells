@@ -47,6 +47,7 @@
   tags:
   - iocage-jails
   - ldap
+  - ldap-debug
   - auth
 
 - stat: path='/iocage/jails/{{ openldap_jail_uuid.stdout.strip() }}/root/'
@@ -74,4 +75,5 @@
   tags:
   - iocage-jails
   - ldap
+  - ldap-debug
   - auth

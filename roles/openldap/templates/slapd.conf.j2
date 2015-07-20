@@ -1,0 +1,60 @@
+# security first
+security ssf=256
+TLSCipherSuite {{ openssl.ciphers }}
+TLSCertificateFile /usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem
+TLSCertificateKeyFile /usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem
+TLSCACertificateFile /usr/local/share/certs/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem
+
+# lock password stuff down.
+access to dn.subtree="ou=people,dc={{ external_domain.split('.') | join(',dc=') }}"
+  attrs=userPassword
+  by self write
+  by anonymous auth
+  by * none
+
+access to *
+  by self write
+  by * read
+
+password-hash {sha}
+allow bind_v2
+
+include         /usr/local/etc/openldap/schema/core.schema
+include:        /usr/local/etc/openldap/schema/inetorgperson.ldif
+include:        /usr/local/etc/openldap/schema/nis.ldif
+include:        /usr/local/etc/openldap/schema/misc.ldif
+
+# Define global ACLs to disable default read access.
+
+# Do not enable referrals until AFTER you have a working directory
+# service AND an understanding of referrals.
+#referral       ldap://root.openldap.org
+
+pidfile         /var/run/openldap/slapd.pid
+argsfile        /var/run/openldap/slapd.args
+
+loglevel        8
+logfile		/var/log/slapd.log
+
+# Load dynamic backend modules:
+modulepath      /usr/local/libexec/openldap
+moduleload    back_mdb
+# moduleload    back_ldap
+
+
+#######################################################################
+# backend database definitions
+#######################################################################
+
+database        mdb
+maxsize         1073741824
+suffix          "dc={{ external_domain.split('.') | join(',dc=') }}"
+rootdn          "cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}"
+rootpw          {{ openldap_data.password_hash }}
+# The database directory MUST exist prior to running slapd AND 
+# should only be accessible by the slapd and slap tools.
+# Mode 700 recommended.
+directory       /var/db/openldap-data
+# Indices to maintain
+index   objectClass     eq
+
