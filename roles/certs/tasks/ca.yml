@@ -51,7 +51,7 @@
   tags:
   - certs
 - name: Check if intermediate serial exists
-  stat: path={{ certificate_authority.certificate_directory }}/ca/root/serial
+  stat: path={{ certificate_authority.certificate_directory }}/ca/intermediate/serial
   register: intermediate_ca_serial
   tags:
   - certs

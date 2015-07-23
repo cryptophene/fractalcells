@@ -34,12 +34,11 @@
   when: zpool_comment.stdout.find("^-$") > 0
   tags: iocage
 
-- name: Install iocage
-  tags: iocage
-  pkgng:
-    name: iocage
-    state: present
-
+#- name: Install iocage
+#  tags: iocage-devel
+#  pkgng:
+#    name: iocage
+#    state: present
 
 - name: Check if we can skip downloading the release
   stat: path='{{ iocage_releases_dir }}/{{ iocage_release_version }}'
@@ -75,7 +74,7 @@
 
 - name: Create FreeBSD {{ iocage_release_version }} basejail
   shell: iocage create -b tag=basejail_{{ iocage_release_version }}
-  when: not (basejail_dir.stdout.strip() != "")
+  when: "basejail_uuid.stdout.strip() == ''"
   tags: iocage
   notify: check if iocage release was fetched
 

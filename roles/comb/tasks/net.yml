@@ -28,7 +28,9 @@
     line: "cloned_interfaces=\"{{ internal_interface }}\""
   register: cloned_interfaces
 
+# TODO: Don't cloneup more than once.
 - name: Create jails network interface
+  run_once: true
   command: service netif cloneup
   when: cloned_interfaces.changed
 
