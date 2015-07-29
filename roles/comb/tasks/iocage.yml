@@ -26,13 +26,15 @@
   changed_when: true
   register: zpool_comment
   always_run: true
-  tags: iocage
+  tags:
+  - iocage
   notify: check if iocage release was fetched
 
 - name: Mark zpool for iocage usage
   command: /sbin/zpool set comment=iocage {{ iocage_zpool }}
   when: zpool_comment.stdout.find("^-$") > 0
-  tags: iocage
+  tags:
+  - iocage
 
 #- name: Install iocage
 #  tags: iocage-devel
@@ -44,10 +46,11 @@
   stat: path='{{ iocage_releases_dir }}/{{ iocage_release_version }}'
   register: release_dir
 
-- name: Fetch FreeBSD release {{ iocage_release_version }}
-  shell: echo "{{ iocage_release_version }}" | /usr/local/sbin/iocage fetch ftpfiles="base.txz src.txz"
-  when: release_dir.stat.isdir is undefined
-  tags: iocage
+#- name: Fetch FreeBSD release {{ iocage_release_version }}
+#  shell: echo "{{ iocage_release_version }}" | /usr/local/sbin/iocage fetch ftpfiles="base.txz src.txz"
+#  when: release_dir.stat.isdir is undefined
+#  tags:
+#  - iocage
 
 - name: Check if it is now present
   stat: path='{{ iocage_releases_dir }}/{{ iocage_release_version }}'
@@ -67,25 +70,36 @@
 #    - iocage-debug
 
 - name: Check if basejail already exists
-  shell: /usr/local/sbin/iocage list | awk '/basejail_{{ iocage_release_version }}/ {print $2}'
-  register: basejail_uuid
+  iocage: state=exists tag='basejail_{{ iocage_release_version }}'
+  register: basejail
   tags:
   - iocage-jails
 
+- name: debug basejail
+  debug: var=basejail
+  tags:
+  - iocage-jails
+
+
 - name: Create FreeBSD {{ iocage_release_version }} basejail
-  shell: iocage create -b tag=basejail_{{ iocage_release_version }}
-  when: "basejail_uuid.stdout.strip() == ''"
-  tags: iocage
+  #shell: iocage create -b tag=basejail_{{ iocage_release_version }}
+  iocage: state=basejail tag=basejail_{{ iocage_release_version }}
+  when:
+  - "'uuid' in basejail and (basejail['uuid'] is not defined or basejail['uuid'] == '-')" 
+  tags:
+  - iocage
   notify: check if iocage release was fetched
 
 - name: Create pkglist file
-  tags: iocage
+  tags:
+  - iocage
   copy:
     src: pkglist.txt
     dest: '{{ iocage_jails_dir }}/pkglist.txt'
 
 - name: Enable iocage service
-  tags: iocage
+  tags:
+  - iocage
   service:
     name: iocage
     enabled: true

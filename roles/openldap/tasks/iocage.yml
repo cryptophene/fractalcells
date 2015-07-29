@@ -22,58 +22,51 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - name: Check if OpenLDAP jail already exists
-  shell: /usr/local/sbin/iocage list | awk '/{{ production_jails.openldap.tag }}/ {print $2}'
-  register: openldap_jail_uuid
+  iocage: state=exists tag='{{ production_jails.openldap.tag }}'
+  register: openldap_jail
   tags:
-  - iocage-template
+  - iocage-openldap
   - iocage-jails
   - ldap
   - auth
 
 - name: Create OpenLDAP jail {{ production_jails.openldap.tag }}
-  shell: /usr/local/sbin/iocage clone {{ template_uuid.stdout.strip() }}  tag={{ production_jails.openldap.tag }} ip4_addr='{{ production_jails.openldap.interface }}|{{ production_jails.openldap.ip }}' boot=on allow_sysvipc=1 pkglist={{ iocage_jails_dir }}/pkglist.txt defaultrouter='{{ internal_ip }}'
+  iocage: state=cloned clone_from='{{ template_jail.uuid }}' tag={{ production_jails.openldap.tag }} properties="ip4_addr='{{ production_jails.openldap.interface }}|{{ production_jails.openldap.ip }}' boot=on allow_sysvipc=0 defaultrouter='{{ internal_ip }}'"
   when:
-  - (openldap_jail_uuid is undefined) or (openldap_jail_uuid.stdout.strip() == "")
+  - "'uuid' in openldap_jail and (openldap_jail['uuid'] is not defined or openldap_jail['uuid'] == '-')"
   tags:
-  - iocage-template
+  - iocage-openldap
   - iocage-jails
   - ldap
   - auth
 
 - name: Find UUID for {{ production_jails.openldap.tag  }}
-  shell: /usr/local/sbin/iocage list | awk '/{{ production_jails.openldap.tag }}/ {print $2}'
+  iocage: state=exists tag='{{ production_jails.openldap.tag }}'
   changed_when: false
-  register: openldap_jail_uuid
+  register: openldap_jail
   tags:
+  - iocage-openldap
   - iocage-jails
   - ldap
   - ldap-debug
   - auth
 
-- stat: path='/iocage/jails/{{ openldap_jail_uuid.stdout.strip() }}/root/'
+- name: Register jail's root diretory
+  stat: path='/iocage/jails/{{ openldap_jail.uuid }}/root/'
   register: openldap_jail_dir
   tags:
-  - iocage-template
+  - iocage-openldap
   - iocage-jails
   - ldap
   - auth
 
 - assert:
     that:
+      - openldap_jail_dir is defined
       - openldap_jail_dir.stat.exists
       - openldap_jail_dir.stat.isdir
   tags:
-  - iocage-template
+  - iocage-openldap
   - iocage-jails
   - ldap
-  - auth
-
-- name: Register jail's root diretory
-  shell: echo "{{ iocage_jails_dir }}/{{ openldap_jail_uuid.stdout.strip() }}/root"
-  changed_when: false
-  register: openldap_jail_root
-  tags:
-  - iocage-jails
-  - ldap
-  - ldap-debug
   - auth

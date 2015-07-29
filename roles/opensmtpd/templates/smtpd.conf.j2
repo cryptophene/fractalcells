@@ -2,7 +2,6 @@
 # See smtpd.conf(5) for more information.
 
 # To accept external mail, replace with: listen on all
-listen on 127.0.0.1
 listen on {{ production_jails.opensmtpd.ip }}
 
 # If you edit the file, you have to run "smtpctl update table aliases"

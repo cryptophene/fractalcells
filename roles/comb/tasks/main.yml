@@ -21,13 +21,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
- - include: user.yml tags=user,host
- - include: sshd.yml tags=sshd,host
- - include: net.yml tags=net,host
- - include: sudo.yml tags=host
- - include: pf.yml tags=pf,host
-# - include: ipfw.yml tags=ipfw,host
- - include: misc.yml tags=misc,host
- - include: iocage.yml tags=iocage,host
- - include: unbound.yml tags=dns,host
-# - include: tarsnap.yml tags=host
+ - include: user.yml
+ - include: sshd.yml
+ - include: net.yml
+ - include: sudo.yml
+ - include: pf.yml
+# - include: ipfw.yml
+ - include: misc.yml
+ - include: iocage.yml
+ - include: unbound.yml
+# - include: tarsnap.yml

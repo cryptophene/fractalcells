@@ -21,37 +21,27 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
-- name: Test if OpenLDAP jail is started
+- name: Make sure OpenLDAP jail is started
+  iocage: state=started tag='{{ production_jails.openldap.tag }}'
   tags:
   - ldap
   - ldap-service
   - auth
-  shell: /usr/local/sbin/iocage list | awk '/{{ openldap_jail_uuid.stdout.strip() }}/ {print $4}'
-  register: openldap_jail_started
-
-- name: Start OpenLDAP jail
-  tags:
-  - ldap
-  - auth
-  shell: /usr/local/sbin/iocage start {{ openldap_jail_uuid.stdout.strip() }}
-  when: openldap_jail_started.stdout.strip() != "up"
-  register: openldap_jail_started
-
-- assert:
-    that:
-      - openldap_jail_started|success
+  register: openldap_jail
 
 - name: Install OpenLDAP 2.4
-  when: openldap_jail_started|success
+  when:
+  - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
   run_once: true
-  shell: "iocage exec -u root {{ production_jails.openldap.tag }} /bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.openldap.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.openldap.tag }}"
+  iocage: state=exec tag={{ production_jails.openldap.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.openldap.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.openldap.tag }}"
   tags:
   - ldap
   - auth
 
 - name: Enable OpenLDAP service
-  when: openldap_jail_started|success
-  lineinfile: dest={{ openldap_jail_root.stdout.strip() }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
+  when:
+  - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
+  lineinfile: dest={{ openldap_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
   with_items:
   - { line: "slapd_enable=\"YES\"" }
   - { line: "slapd_flags='-h \\\"ldapi:///var/run/openldap/ldapi/ ldap://0.0.0.0/ ldaps://0.0.0.0/\\\"'" }
@@ -67,19 +57,23 @@
   - auth
   - certs
   - ldap-service
+  when:
+  - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
   with_items:
-  - { path: '{{ openldap_jail_root.stdout.strip() }}/var/db/openldap-data', mode: '755', owner: 389, group: 389 }
-  - { path: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private', mode: '700', owner: 389, group: 389 }
-  - { path: '{{ openldap_jail_root.stdout.strip() }}{{ certificate_authority.certificate_directory }}/', mode: '700', owner: 389, group: 389 }
+  - { path: '{{ openldap_jail_dir.stat.path }}/var/db/openldap-data', mode: '755', owner: 389, group: 389 }
+  - { path: '{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private', mode: '700', owner: 389, group: 389 }
+  - { path: '{{ openldap_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/', mode: '700', owner: 389, group: 389 }
 
 - name: Deploy OpenLDAP config files
   #when: openldap_jail_started|success
-  template: src='{{ item.name }}.j2' dest='{{ openldap_jail_root.stdout.strip() }}/{{ item.path }}/{{ item.name }}' mode=0644
+  template: src='{{ item.name }}.j2' dest='{{ openldap_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
   with_items:
   - { name: "slapd.conf", path: "/usr/local/etc/openldap", mode: 644 }
   - { name: "ldap.conf", path: "/usr/local/etc/openldap", mode: 644 }
   #- { name: "postgresql.conf", path: "/usr/local/etc", mode: 644 }
   register: openldap_config_deployed
+  when:
+  - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
   tags:
   - ldap-service
   - ldap
@@ -99,11 +93,13 @@
   - auth
   - certs
   - ldap-service
+  when:
+  - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
   with_items:
-  - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.cert.pem', destination: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem' }
-  - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem', destination: '{{  openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.csr.pem' }
-  - { origin: '{{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem', destination: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.key.pem' }
-  - { origin: '{{ certificate_authority.certificate_directory }}/ca/intermediate/certs/{{ certificate_authority.short_name }}_ca.cert.pem', destination: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem' }
+  - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.cert.pem', destination: '{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem' }
+  - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem', destination: '{{  openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.csr.pem' }
+  - { origin: '{{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem', destination: '{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.key.pem' }
+  - { origin: '{{ certificate_authority.certificate_directory }}/ca/intermediate/certs/{{ certificate_authority.short_name }}_ca.cert.pem', destination: '{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem' }
 
 - name: Make Proxy Key, CSR and Cert readonly
   file: path={{ item.path }} state=file mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
@@ -113,15 +109,14 @@
   - ldap-service
   - certs
   with_items:
-  - { path: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem', mode: 444, owner: 389, group: 389 }
-  - { path: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.csr.pem', mode: 444, owner: 389, group: 389 }
-  - { path: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.key.pem', mode: 400, owner: 389, group: 389 }
-  - { path: '{{ openldap_jail_root.stdout.strip() }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem', mode: 444, owner: 389, group: 389 }
+  - { path: '{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem', mode: 444, owner: 389, group: 389 }
+  - { path: '{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.csr.pem', mode: 444, owner: 389, group: 389 }
+  - { path: '{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.key.pem', mode: 400, owner: 389, group: 389 }
+  - { path: '{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem', mode: 444, owner: 389, group: 389 }
 
 - name: start openldap
-  shell: iocage exec -u root {{ openldap_jail_uuid.stdout.strip() }} /bin/sh -c "service slapd restart"
+  iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"service slapd restart\""
   tags:
   - ldap
   - ldap-service
   - auth
-

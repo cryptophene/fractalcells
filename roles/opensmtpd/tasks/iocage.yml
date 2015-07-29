@@ -22,41 +22,41 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - name: Check if OpenSMTPD jail already exists
-  shell: /usr/local/sbin/iocage list | awk '/{{ production_jails.opensmtpd.tag }}/ {print $2}'
-  register: opensmtpd_jail_uuid
+  iocage: state=exists tag='{{ production_jails.opensmtpd.tag }}'
+  register: opensmtpd_jail
   tags:
-  - iocage-template
   - iocage-jails
+  - iocage-opensmtpd
   - smtp
   - mail
 
-- name: Create OpenSMTPD jail {{ production_jails.postgres.tag }}
-  shell: /usr/local/sbin/iocage clone {{ template_uuid.stdout.strip() }}  tag={{ production_jails.opensmtpd.tag }} ip4_addr='{{ production_jails.opensmtpd.interface }}|{{ production_jails.opensmtpd.ip }}' boot=on allow_sysvipc=1 pkglist={{ iocage_jails_dir }}/pkglist.txt defaultrouter='{{ internal_ip }}'
+- name: Create OpenSMTPD jail {{ production_jails.opensmtpd.tag }}
+  iocage: state=cloned clone_from='{{ template_jail.uuid }}' tag={{ production_jails.opensmtpd.tag }} properties="ip4_addr='{{ production_jails.opensmtpd.interface }}|{{ production_jails.opensmtpd.ip }}' boot=on allow_sysvipc=0 defaultrouter='{{ internal_ip }}'"
   when:
-  - (opensmtpd_jail_uuid is undefined) or (opensmtpd_jail_uuid.stdout.strip() == "")
+  - "'uuid' in opensmtpd_jail and (opensmtpd_jail['uuid'] is not defined or opensmtpd_jail['uuid'] == '-')"
   tags:
-  - iocage-template
   - iocage-jails
+  - iocage-opensmtpd
   - smtp
   - mail
 
 - name: Find UUID for {{ production_jails.opensmtpd.tag  }}
-  shell: /usr/local/sbin/iocage list | awk '/{{ production_jails.opensmtpd.tag }}/ {print $2}'
+  iocage: state=exists tag='{{ production_jails.opensmtpd.tag }}'
   changed_when: false
-  register: opensmtpd_jail_uuid
+  register: opensmtpd_jail
   tags:
-  - iocage-template
   - iocage-jails
+  - iocage-opensmtpd
   - smtp
   - mail
 
-- stat: path='/iocage/jails/{{ opensmtpd_jail_uuid.stdout.strip() }}/root/'
+- name: Register jail's root diretory
+  stat: path='/iocage/jails/{{ opensmtpd_jail.uuid }}/root/'
   register: opensmtpd_jail_dir
   tags:
-  - iocage-template
   - iocage-jails
+  - iocage-opensmtpd
   - smtp
-  - smtp-debug
   - mail
 
 - assert:
@@ -66,14 +66,7 @@
       - opensmtpd_jail_dir.stat.isdir
   tags:
   - iocage-jails
+  - iocage-opensmtpd
   - smtp-debug
-  - smtp
-
-- name: Find UUID for {{ production_jails.opensmtpd.tag  }}
-  shell: /usr/local/sbin/iocage list | awk '/{{ production_jails.opensmtpd.tag }}/ {print $2}'
-  changed_when: false
-  register: opensmtpd_jail_uuid
-  tags:
-  - iocage-jails
   - smtp
   - mail

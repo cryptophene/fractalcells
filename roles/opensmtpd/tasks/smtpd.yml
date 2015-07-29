@@ -21,59 +21,47 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
-- name: Test if OpenSMTPD jail is started
+- name: Make sure OpenSMTPD jail is started
+  iocage: state=started tag='{{ production_jails.opensmtpd.tag }}'
   tags:
   - smtp
   - mail
-  shell: /usr/local/sbin/iocage list | awk '/{{ opensmtpd_jail_uuid.stdout.strip() }}/ {print $4}'
-  register: opensmtpd_jail_started
-
-- name: Start OpenSMTPD jail
-  tags:
-  - smtp
-  - mail
-  shell: /usr/local/sbin/iocage start {{ opensmtpd_jail_uuid.stdout.strip() }}
-  when: opensmtpd_jail_started.stdout.strip() != "up"
-  register: opensmtpd_jail_started
-
-- assert:
-    that:
-      - opensmtpd_jail_started|success
+  register: opensmtpd_jail
 
 - name: Install OpenSMTPD
-  when: opensmtpd_jail_started|success
+  iocage: state=exec tag={{ production_jails.opensmtpd.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.opensmtpd.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.opensmtpd.tag }}"
+  when:
+  - "'uuid' in opensmtpd_jail and (opensmtpd_jail['uuid'] is defined and opensmtpd_jail['uuid'] != '-')"
   run_once: true
-  shell: "iocage exec -u root {{ production_jails.opensmtpd.tag }} /bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.opensmtpd.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.opensmtpd.tag }}"
   tags:
   - smtp
   - mail
-  with_items:
-  - { name: "opensmtpd-devel" }
-  - { name: "ca_root_nss" }
 
 - name: Deploy OpenSMTPD config files
-  when: opensmtpd_jail_started|success
+  when:
+  - "'uuid' in opensmtpd_jail and (opensmtpd_jail['uuid'] is defined and opensmtpd_jail['uuid'] != '-')"
   template: src='{{ item.name }}.j2' dest='{{ opensmtpd_jail_dir.stat.path }}{{ item.path }}/{{ item.name }}' mode={{ item.mode}} owner=root group=257
   with_items:
           - { name: "authinfo.db", path: "/usr/local/etc/mail", mode: 600 }
           - { name: "smtpd.conf", path: "/usr/local/etc/mail", mode: 644 }
           - { name: "hosts", path: "/etc/", mode: 644 }
   register: opensmtpd_config_deployed
-  when: opensmtpd_jail_dir.stat.path != ""
   tags:
   - smtp
   - smtp-debug
   - mail
 
 - name: Enable OpenSMTPD service
-  when: opensmtpd_jail_started|success
   lineinfile: dest={{ opensmtpd_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="smtpd_enable=\"YES\""
+  when:
+  - "'uuid' in opensmtpd_jail and (opensmtpd_jail['uuid'] is defined and opensmtpd_jail['uuid'] != '-')"
   tags:
   - smtp
   - mail
+
 # TODO: move to notify/handler thing once iocage module is there
 - name: start opensmtpd
-  shell: iocage exec {{ opensmtpd_jail_uuid.stdout.strip() }} /bin/sh -c "service smtpd start"
+  iocage: state=exec tag={{ opensmtpd_jail.uuid }} cmd="/bin/sh -c \"service smtpd start\""
   tags:
   - smtp
   - mail

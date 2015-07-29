@@ -22,43 +22,53 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - name: Check if Postgresql jail already exists
-  shell: /usr/local/sbin/iocage list | awk '/{{ production_jails.postgresql.tag }}/ {print $2}'
-  register: postgresql_jail_uuid
+  iocage: state=exists tag='{{ production_jails.postgresql.tag }}'
+  register: postgresql_jail
   tags:
   - iocage-jails
+  - iocage-postgresql
   - pgsql
   - db
 
 - name: Create PostgreSQL jail {{ production_jails.postgresql.tag }}
-  shell: /usr/local/sbin/iocage clone {{ template_uuid.stdout.strip() }}  tag={{ production_jails.postgresql.tag }} ip4_addr='{{ production_jails.postgresql.interface }}|{{ production_jails.postgresql.ip }}' boot=on allow_sysvipc=1 pkglist={{ iocage_jails_dir }}/pkglist.txt defaultrouter='{{ internal_ip }}'
+  iocage: state=cloned clone_from='{{ template_jail.uuid }}' tag={{ production_jails.postgresql.tag }} properties="ip4_addr='{{ production_jails.postgresql.interface }}|{{ production_jails.postgresql.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}'"
   when:
-  - (postgresql_jail_uuid is undefined) or (postgresql_jail_uuid.stdout.strip() == "")
+  - "'uuid' in postgresql_jail and (postgresql_jail['uuid'] is not defined or postgresql_jail['uuid'] == '-')"
+  register: postgresql_jail
   tags:
   - iocage-jails
+  - iocage-postgresql
   - pgsql
   - db
 
+# TODO: make iocage module -> cloned -> return the uuid
 - name: Find UUID for {{ production_jails.postgresql.hostname  }}
-  shell: /usr/local/sbin/iocage list | awk '/{{ production_jails.postgresql.tag  }}/ {print $2}'
+  iocage: state=exists tag='{{ production_jails.postgresql.tag }}'
   changed_when: false
-  register: postgresql_jail_uuid
+  register: postgresql_jail
   tags:
   - iocage-jails
+  - iocage-postgresql
   - pgsql-debug
   - pgsql
   - db
 
-- stat: path=/iocage/jails/{{ postgresql_jail_uuid.stdout.strip() }}/root/
+- name: Register jail's root diretory
+  stat: path=/iocage/jails/{{ postgresql_jail.uuid }}/root/
   register: postgresql_jail_dir
   tags:
   - iocage-jails
+  - iocage-postgresql
   - pgsql
+  - pgsql-debug
   - db
 
-- name: Register jail's root diretory
-  shell: echo {{ iocage_jails_dir }}/{{ postgresql_jail_uuid.stdout.strip() }}/root
-  changed_when: false
+- assert:
+    that:
+      - postgresql_jail_dir.stat.exists
+      - postgresql_jail_dir.stat.isdir
   tags:
+  - iocage-postgresql
   - iocage-jails
   - pgsql
   - db

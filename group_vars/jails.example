@@ -47,3 +47,14 @@ production_jails:
     pf:
       ports:   '587'
       proto:   'tcp'
+  nginx_proxy:
+    hostname:  'www'
+    interface: 'lo1'
+    ip:        '10.1.0.8'
+    tag:       'nginx_proxy'
+    pkgs:
+    - ca_root_nss
+    - nginx
+    pf:
+      ports:   '80,443'
+      proto:   'tcp'
