@@ -12,21 +12,26 @@ This README is, for the time being, exclusively about the "How"
 You may want to use the following software, and know your way around them before evaluating
 `fractalcells || hosting singularity':
 
-1. FreeBSD
+1. [FreeBSD](https://www.freebsd.org/)
 1. One ZFS pool.
-1. Ansible
+1. [Ansible](https://www.ansible.com/)
+1. [ansible-iocage](https://bitbucket.org/fractalcells/ansible-iocage/src)
 
 ## Howto
 
 ```
+    git clone https://bitbucket.org/fractalcells/ansible-iocage.git
     git clone https://bitbucket.org/fractalcells/fractalcells.git
     cd fractalcells
+    cp ../ansible-iocage/iocage library/iocage
     cat group_vars/*.example > group_vars/your_firm_name
     vim group_vars/your_firm_name 		# edit all the things
-    cp hosts.example > hosts
-    vim hosts 					# edit all the things
-    ansible-playbook -i hosts site.yml --check
-    ansible-playbook -i hosts site.yml
+    cp hosts.example hosts.your_firm_name
+    vim hosts 					# edit all the things, especially your_firm_name section
+    cp ansible.cfg.example ansible.cfg
+    vim ansible.cfg 				# edit all the things, especially your_firm_name section
+    ansible-playbook -i hosts.your_firm_name site.yml --check
+    ansible-playbook -i hosts.your_firm_name site.yml
 ```
 Then, do this:
 
@@ -38,7 +43,7 @@ Then, do this:
     protect safe with dog.
 ```
 
-If you know what you're doing: you're done now.
+If you know what you're doing: Congratulations, you're done now.
 If not: we do offer paid support.
 
 

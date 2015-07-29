@@ -1,8 +1,5 @@
 [default]
-ansible_ssh_host=10.0.1.220
+some_server_name ansible_connection=ssh ansible_ssh_user=your_username ansible_ssh_port=22 ansible_ssh_private_key_file=/path/to/your_firm_name/.ssh/private_key
 
-[localhost]
-127.0.0.1 ansible_connection=ssh  ansible_ssh_user=root
-
-[vbox]
-vbox ansible_connection=ssh ansible_ssh_port=2222
+[your_firm_name]
+some_other_server_name ansible_connection=ssh ansible_ssh_user=your_username ansible_ssh_port=22 ansible_ssh_private_key_file=/path/to/your_firm_name/.ssh/private_key
