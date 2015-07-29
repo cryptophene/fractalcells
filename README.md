@@ -21,8 +21,8 @@ You may want to use the following software, and know your way around them before
 ```
     git clone https://bitbucket.org/fractalcells/fractalcells.git
     cd fractalcells
-    cat host_vars/*.example > host_vars/your_firm_name
-    vim host_vars/your_firm_name 		# edit all the things
+    cat group_vars/*.example > group_vars/your_firm_name
+    vim group_vars/your_firm_name 		# edit all the things
     cp hosts.example > hosts
     vim hosts 					# edit all the things
     ansible-playbook -i hosts site.yml --check
