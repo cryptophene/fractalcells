@@ -1,0 +1,87 @@
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+- name: Make sure NGINX internal jail is started
+  iocage: state=started tag='{{ production_jails.nginx_internal.tag }}'
+  tags:
+  - nginx_internal
+  - proxy
+  register: nginx_internal_jail
+
+- name: Install NGINX
+  when:
+  - "'uuid' in nginx_internal_jail and (nginx_internal_jail['uuid'] is defined and nginx_internal_jail['uuid'] != '-')"
+  run_once: true
+  iocage: state=exec tag={{ production_jails.nginx_internal.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.nginx_internal.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.nginx_internal.tag }}"
+  tags:
+  - nginx_internal
+  - proxy
+
+- name: Create directories
+  file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
+  tags:
+  - nginx_internal
+  - nginx_internal-debug
+  - proxy
+  with_items:
+  - { path: '{{ nginx_internal_jail_dir.stat.path }}/usr/local/etc/nginx/conf.d', mode: '755', owner: root, group: wheel }
+  - { path: '{{ nginx_internal_jail_dir.stat.path }}/var/log/nginx', mode: '755', owner: www, group: www }
+  - { path: '{{ nginx_internal_jail_dir.stat.path }}/var/log/php-fpm', mode: '755', owner: www, group: www }
+  - { path: '{{ nginx_internal_jail_dir.stat.path }}/usr/local/etc/php-fpm.d', mode: '755', owner: root, group: wheel }
+
+- name: Deploy NGINX config files
+  when:
+  - "'uuid' in nginx_internal_jail and (nginx_internal_jail['uuid'] is defined and nginx_internal_jail['uuid'] != '-')"
+  template: src='{{ item.name }}.j2' dest='{{ nginx_internal_jail_dir.stat.path }}{{ item.path }}/{{ item.name }}' mode={{ item.mode}} owner={{ item.owner }} group={{ item.group }}
+  with_items:
+  - { name: "nginx.conf", path: "/usr/local/etc/nginx", mode: 644, owner: root, group: wheel  }
+  - { name: "php-fpm.conf", path: "/usr/local/etc", mode: 644, owner: root, group: wheel  }
+  - { name: "phpstaradmin.conf", path: "/usr/local/etc/php-fpm.d", mode: 644, owner: root, group: wheel   }
+  - { name: "internal.conf", path: "/usr/local/etc/nginx/conf.d", mode: 644, owner: root, group: wheel  }
+  - { name: "config.php", path: "/usr/local/www/phpldapadmin/config", mode: 600, owner: www, group: www }
+  - { name: "config.inc.php", path: "/usr/local/www/phpPgAdmin/conf", mode: 600, owner: www, group: www }
+  register: nginx_internal_config_deployed
+  tags:
+  - nginx_internal
+  - nginx_internal-debug
+  - proxy
+
+- name: Enable NGINX internal services
+  when:
+  - "'uuid' in nginx_internal_jail and (nginx_internal_jail['uuid'] is defined and nginx_internal_jail['uuid'] != '-')"
+  lineinfile: dest={{ nginx_internal_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
+  with_items:
+          - { line: "nginx_enable=\"YES\"" }
+          - { line: "php_fpm_enable=\"YES\"" }
+  tags:
+  - nginx_internal
+  - proxy
+
+# TODO: move to notify/handler thing once iocage module is there
+# TODO: use reloaded instead of restarted
+- name: restart nginx
+  iocage: state=exec tag={{ nginx_internal_jail.uuid }} cmd="/bin/sh -c \"service nginx restart && service php-fpm restart\""
+  tags:
+  - nginx_internal
+  - nginx_internal-debug
+  - proxy

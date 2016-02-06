@@ -1,0 +1,113 @@
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+- name: Make sure NGINX proxy jail is started
+  iocage: state=started tag='{{ production_jails.nginx_proxy.tag }}'
+  tags:
+  - nginx_proxy
+  - proxy
+  register: nginx_proxy_jail
+
+- name: Install NGINX
+  when:
+  - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is defined and nginx_proxy_jail['uuid'] != '-')"
+  run_once: true
+  iocage: state=exec tag={{ production_jails.nginx_proxy.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.nginx_proxy.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.nginx_proxy.tag }}"
+  tags:
+  - nginx_proxy
+  - proxy
+
+- name: Create directories
+  file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
+  tags:
+  - nginx_proxy
+  - proxy
+  with_items:
+  - { path: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/', mode: '700', owner: 389, group: 389 }
+  - { path: '{{ nginx_proxy_jail_dir.stat.path }}/usr/local/etc/nginx/conf.d', mode: '755', owner: root, group: wheel }
+  - { path: '{{ nginx_proxy_jail_dir.stat.path }}/var/log/nginx', mode: '755', owner: www, group: www }
+
+- name: Copy Proxy Key, CSR and Cert to the {{ production_jails.nginx_proxy.tag }} jail
+  shell: cp -a {{ item.origin }} {{ item.destination }}
+  tags:
+  - nginx_proxy
+  - proxy
+  with_items:
+  - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.cert.pem', destination: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.cert.pem' }
+  - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem', destination: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.csr.pem' }
+  - { origin: '{{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem', destination: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.key.pem' }
+  - { origin: '{{ certificate_authority.certificate_directory }}/ca/intermediate/certs/{{ certificate_authority.short_name }}_ca.cert.pem', destination: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem'
+ }
+
+- name: Make Proxy Key, CSR and Cert readonly
+  file: path={{ item.path }} state=file mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
+  tags:
+  - nginx_proxy
+  - proxy
+  with_items:
+  - { path: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.cert.pem', mode: 444, owner: 80, group: 80 }
+  - { path: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.csr.pem', mode: 444, owner: 80, group: 80 }
+  - { path: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.key.pem', mode: 400, owner: 80, group: 80 }
+  - { path: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem', mode: 444, owner: 80, group: 80 }
+
+- name: Deploy NGINX config files
+  when:
+  - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is defined and nginx_proxy_jail['uuid'] != '-')"
+  template: src='{{ item.name }}.j2' dest='{{ nginx_proxy_jail_dir.stat.path }}{{ item.path }}/{{ item.name }}' mode={{ item.mode}} #owner=root group=257
+  with_items:
+  - { name: "nginx.conf", path: "/usr/local/etc/nginx", mode: 644 }
+  register: nginx_proxy_config_deployed
+  tags:
+  - nginx_proxy
+  - proxy
+
+- name: Deploy NGINX site config files
+  template: src='forward.j2' dest='{{ nginx_proxy_jail_dir.stat.path }}/usr/local/etc/nginx/conf.d/{{ item.value.hostname }}.{{ external_domain }}.conf' mode=644 owner=80 group=80
+  with_dict: "{{ production_jails }}"
+  when:
+  - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is defined and nginx_proxy_jail['uuid'] != '-')"
+  - item.value.nginx_proxied is defined
+  register: nginx_proxy_site_config_deployed
+  tags:
+  - nginx_proxy
+  - nginx_proxy-debug
+  - proxy
+
+- name: Enable NGINX proxy services
+  when:
+  - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is defined and nginx_proxy_jail['uuid'] != '-')"
+  lineinfile: dest={{ nginx_proxy_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
+  with_items:
+          - { line: "nginx_enable=\"YES\"" }
+  tags:
+  - nginx_proxy
+  - proxy
+
+# TODO: move to notify/handler thing once iocage module is fully there
+# TODO: use reloaded instead of restarted
+- name: restart nginx
+  iocage: state=exec tag={{ nginx_proxy_jail.uuid }} cmd="/bin/sh -c \"service nginx restart\""
+  tags:
+  - nginx_proxy
+  - nginx_proxy-debug
+  - proxy

@@ -31,3 +31,5 @@
     - postgresql
     - opensmtpd
     - openldap
+    - nginx_proxy
+    - nginx_internal

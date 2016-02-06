@@ -26,25 +26,25 @@
   register: basejail
   tags:
   - iocage-template
-  - iocage-jails
-
-- name: debug basejail
-  debug: var=basejail
-  tags:
-  - iocage-jails
+  - iocage-cell
 
 - name: Check if template jail already exists
   iocage: state=exists tag='template_{{ iocage_release_version }}'
   register: template_jail
   tags:
   - iocage-template
-  - iocage-jails
+  - iocage-cell
   register: template_jail
+
+- name: debug template_jail
+  debug: var=template_jail
+  tags:
+   - pf
 
 - name: Create template jail
   iocage: state=cloned clone_from='basejail_{{ iocage_release_version }}' tag='template_{{ iocage_release_version }}' properties="pkglist={{ iocage_jails_dir }}/pkglist.txt ip4_addr='{{ production_jails.template.interface }}|{{ production_jails.template.ip }}' resolver='nameserver {{ internal_ip }}'"
   tags:
-  - iocage-jails
+  - iocage-cell
   - iocage-template
   register: template_jail
   when:
@@ -56,12 +56,7 @@
   tags:
   - iocage-template
   - iocage-template-uuid
-  - iocage-jails
-
-- name: debug template_jail
-  debug: var=template_jail
-  tags:
-  - iocage-jails
+  - iocage-cell
 
 - assert:
     that:
@@ -70,7 +65,7 @@
 - name: Start template jail
   iocage: state=started tag='template_{{ iocage_release_version }}'
   tags:
-  - iocage-jails
+  - iocage-cell
   - iocage-template
   register: template_jail
 
@@ -78,18 +73,12 @@
     that:
       - template_jail|success
 
-- name: debug template_jail
-  debug: var=template_jail
-  tags:
-  - iocage-jails
-
-
 - name: Check if template jail needs pkg bootstrap
   stat: path=/iocage/jails/{{ template_jail.uuid }}/root/var/db/pkg/local.sqlite
   register: template_jail_pkgdb
   run_once: true
   tags:
-  - iocage-jails
+  - iocage-cell
   - iocage-template
 
 - name: Bootstrap pkg for template jail
@@ -100,7 +89,7 @@
   #- not template_jail_pkgdb.stat.exists
   run_once: true
   tags:
-  - iocage-jails
+  - iocage-cell
   - iocage-template
 
 # TODO: put checking sauce to see if that actually needs to be done.
@@ -112,19 +101,12 @@
   #- not template_jail_pkgdb.stat.exists
   iocage: state=exec tag={{ production_jails.template.tag }}{{ iocage_release_version }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.template.pkgs | join(' ') }} | tee -a /var/log/pkg.log.{{ production_jails.template.tag }}{{ iocage_release_version }}\""
   tags:
-  - iocage-jails
+  - iocage-cell
   - iocage-template
-
-- name: Test if template jail is still started
-  tags:
-  - iocage-jails
-  - iocage-template
-  iocage: state=started tag='template_{{ iocage_release_version }}'
-  register: template_jail
 
 - name: Stop template jail
   tags:
-  - iocage-jails
+  - iocage-cell
   - iocage-template
   iocage: state=stopped tag={{ template_jail.uuid }}
   when: "template_jail|success"

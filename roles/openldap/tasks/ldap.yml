@@ -44,7 +44,7 @@
   lineinfile: dest={{ openldap_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
   with_items:
   - { line: "slapd_enable=\"YES\"" }
-  - { line: "slapd_flags='-h \\\"ldapi:///var/run/openldap/ldapi/ ldap://0.0.0.0/ ldaps://0.0.0.0/\\\"'" }
+  - { line: "slapd_flags='-h \"ldapi:///var/run/openldap/ldapi/ ldap://0.0.0.0/ ldaps://0.0.0.0/\"'" }
   tags:
   - ldap
   - ldap-service

@@ -21,52 +21,53 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
-- name: Check if OpenSMTPD jail already exists
-  iocage: state=exists tag='{{ production_jails.opensmtpd.tag }}'
-  register: opensmtpd_jail
+- name: Check if NGINX jail already exists
+  iocage: state=exists tag='{{ production_jails.nginx_proxy.tag }}'
+  register: nginx_proxy_jail
   tags:
   - iocage-jails
-  - iocage-opensmtpd
-  - smtp
-  - mail
+  - iocage-nginx_proxy
+  - nginx_proxy
+  - nginx_proxy-debug
+  - proxy
 
-- name: Create OpenSMTPD jail {{ production_jails.opensmtpd.tag }}
-  iocage: state=cloned clone_from='{{ template_jail.uuid }}' tag={{ production_jails.opensmtpd.tag }} properties="ip4_addr='{{ production_jails.opensmtpd.interface }}|{{ production_jails.opensmtpd.ip }}' boot=on allow_sysvipc=0 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
+- name: Create NGINX jail {{ production_jails.nginx_proxy.tag }}
+  iocage: state=cloned clone_from='{{ template_jail.uuid }}' tag={{ production_jails.nginx_proxy.tag }} properties="ip4_addr='{{ production_jails.nginx_proxy.interface }}|{{ production_jails.nginx_proxy.ip }}' boot=on allow_sysvipc=0 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
   when:
-  - "'uuid' in opensmtpd_jail and (opensmtpd_jail['uuid'] is not defined or opensmtpd_jail['uuid'] == '-')"
+  - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is not defined or nginx_proxy_jail['uuid'] == '-')"
   tags:
   - iocage-jails
-  - iocage-opensmtpd
-  - smtp
-  - mail
+  - iocage-nginx_proxy
+  - nginx_proxy
+  - proxy
 
-- name: Find UUID for {{ production_jails.opensmtpd.tag  }}
-  iocage: state=exists tag='{{ production_jails.opensmtpd.tag }}'
+- name: Find UUID for {{ production_jails.nginx_proxy.tag  }}
+  iocage: state=exists tag='{{ production_jails.nginx_proxy.tag }}'
   changed_when: false
-  register: opensmtpd_jail
+  register: nginx_proxy_jail
   tags:
   - iocage-jails
-  - iocage-opensmtpd
-  - smtp
-  - mail
+  - iocage-nginx_proxy
+  - nginx_proxy
+  - nginx_proxy-debug
+  - proxy
 
 - name: Register jail's root diretory
-  stat: path='/iocage/jails/{{ opensmtpd_jail.uuid }}/root/'
-  register: opensmtpd_jail_dir
+  stat: path='/iocage/jails/{{ nginx_proxy_jail.uuid }}/root/'
+  register: nginx_proxy_jail_dir
   tags:
   - iocage-jails
-  - iocage-opensmtpd
-  - smtp
-  - mail
+  - iocage-nginx_proxy
+  - nginx_proxy
+  - nginx_proxy-debug
+  - proxy
 
 - assert:
     that:
-      - opensmtpd_jail_dir is defined
-      - opensmtpd_jail_dir.stat.exists
-      - opensmtpd_jail_dir.stat.isdir
+      - nginx_proxy_jail_dir.stat.exists
+      - nginx_proxy_jail_dir.stat.isdir
   tags:
   - iocage-jails
-  - iocage-opensmtpd
-  - smtp-debug
-  - smtp
-  - mail
+  - iocage-nginx_proxy
+  - nginx_proxy
+  - proxy

@@ -1,5 +1,4 @@
-# Copyright 2015, Perceivon Hosting Inc.
-#
+# Copyright 2015, Perceivon Hosting Inc.  #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
@@ -21,8 +20,71 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
+- name: Make sure make.conf exists
+  file: state=touch path=/etc/make.conf
+  tags:
+  - comb-misc
+- name: Append some settings to make.conf
+  lineinfile: dest=/etc/make.conf line={{ item.line }}
+  with_items:
+          - { line: "DEFAULT_VERSIONS=pgsql=9.4" }
+  tags:
+  - comb-misc
+- name: Install some packages
+  pkgng: name={{ item.name }} state=present
+  with_items:
+  - { name: zsh }
+  - { name: tmux }
+  - { name: python27 }
+  - { name: py27-keyczar  }
+  - { name: py27-pycrypto  }
+  - { name: vim-lite  }
+  - { name: rsync  }
+  - { name: zxfer  }
+  - { name: iftop  }
+  - { name: postgresql94-client  }
+  - { name: iocage-devel }
+  # XXX: Why did I outcomment this?
+  #- { name: ruby }
+  #- { name: libyaml }
+  #- { name: libedit }
+  #- { name: ruby21-bdb }
+  #- { name: db5 }
+  - { name: portupgrade  }
+  tags:
+  - comb-misc
+- name: See if portstree needs to be checked out.
+  stat: path=/usr/ports/.svn
+  register: ports_svn_dir
+  tags:
+  - comb-misc
+- name: Checkout portstree
+  shell: svnlite co svn://svn.freebsd.org/ports/head /usr/ports
+  tags:
+  - comb-misc
+  when:
+  - ports_svn_dir.stat.isdir is undefined
+- name: See if portstree needs to be updated
+  shell: /bin/sh -c "[ \"`cd  /usr/ports && svnlite info | grep 'Last Changed Date' | awk '{print $4}'`\" == `date \"+%Y-%m-%d\"` ]"
+  register: ports_svn_uptodate
+  tags:
+  - comb-misc
+- name: Update portstree
+  shell: cd /usr/ports && svnlite up
+  when:
+  - ports_svn_dir.stat.isdir is defined and ports_svn_uptodate|failed
+
+- name: Install py27-psycopg2
+  portinstall: name={{ item.name }} state=present use_packages=no
+  tags:
+  - comb-misc
+  with_items:
+  - { name: databases/py-psycopg2 }
+
 - name: Install helpful default config files
   copy: src="{{item.name}}" dest="{{item.path}}" mode="{{item.mode}}"
   with_items:
   - { name: "tmux.conf", path: "/usr/local/etc/tmux.conf", mode: 644 }
   - { name: "zshrc", path: "/usr/local/etc/zshrc", mode: 644 }
+  tags:
+  - comb-misc

@@ -8,9 +8,18 @@
   - unbound
 - name: Deploy unbound.conf
   template: src='unbound.conf.j2' dest='/var/unbound/unbound.conf' mode=0644
-  tags: 
+  tags:
   - dns
   - unbound
+- name: Deploy forward and lan-zones configs
+  copy: src='unbound_{{ item.name }}' dest='/var/unbound/{{ item.name }}' mode=0644
+  with_items:
+  - { name: forward.conf }
+  - { name: lan-zones.conf }
+  tags:
+  - dns
+  - unbound
+
 - name: restart unbound
   service: name=local_unbound state=restarted
   tags:

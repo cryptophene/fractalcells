@@ -1,0 +1,55 @@
+    server {
+        listen       80;
+        server_name {{ production_jails.nginx_internal.hostname }}.{{ external_domain }};
+
+        set $basepath "/usr/local/www";
+        root  "${basepath}/nginx";
+        # enable PHP
+        index index.php index.html;
+        # deny access to .htaccess files, if Apache's document root
+        # concurs with nginx's
+
+        location /phpldapadmin {
+                alias /usr/local/www/phpldapadmin/htdocs;
+                index index.php index.html index.htm;
+        }
+        location ~ ^/phpldapadmin/.*\.php$ {
+                root /usr/local/www;
+                if ($request_filename !~* htdocs) {
+                        rewrite ^/phpldapadmin(/.*)?$ /phpldapadmin/htdocs$1;
+                }
+                fastcgi_pass 127.0.0.1:9000;
+                fastcgi_index index.php;
+                fastcgi_param SCRIPT_FILENAME $request_filename;
+                include fastcgi_params;
+        }
+
+        location /phpPgAdmin {
+                alias /usr/local/www/phpPgAdmin;
+                index index.php index.html index.htm;
+        }
+        location ~ ^/phpPgAdmin/.*\.php$ {
+                root /usr/local/www;
+                fastcgi_pass 127.0.0.1:9000;
+                fastcgi_index index.php;
+                fastcgi_param SCRIPT_FILENAME $request_filename;
+                include fastcgi_params;
+        }
+
+        location /nginx_status {
+                # Turn on nginx stats
+                stub_status on;
+                # I do not need logs for stats
+                access_log   off;
+                # Security: Only allow access from 192.168.1.100 IP #
+                #allow 192.168.1.100;
+                # Send rest of the world to /dev/null #
+                #deny all;
+        }
+
+
+
+        location ~ /\.ht {
+            deny  all;
+        }
+}

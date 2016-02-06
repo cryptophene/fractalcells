@@ -21,13 +21,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
+ - include: misc.yml
  - include: user.yml
  - include: sshd.yml
  - include: net.yml
  - include: sudo.yml
  - include: pf.yml
 # - include: ipfw.yml
- - include: misc.yml
  - include: iocage.yml
  - include: unbound.yml
 # - include: tarsnap.yml
