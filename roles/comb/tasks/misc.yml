@@ -20,12 +20,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
-- name: Make sure make.conf exists
-  file: state=touch path=/etc/make.conf
-  tags:
-  - comb-misc
 - name: Append some settings to make.conf
-  lineinfile: dest=/etc/make.conf line={{ item.line }}
+  lineinfile: dest=/etc/make.conf line={{ item.line }} create=yes
   with_items:
           - { line: "DEFAULT_VERSIONS=pgsql=9.4" }
   tags:
@@ -44,6 +40,8 @@
   - { name: iftop  }
   - { name: postgresql94-client  }
   - { name: iocage-devel }
+  - { name: poudriere }
+  - { name: dialog4ports }
   # XXX: Why did I outcomment this?
   #- { name: ruby }
   #- { name: libyaml }
@@ -73,6 +71,11 @@
   shell: cd /usr/ports && svnlite up
   when:
   - ports_svn_dir.stat.isdir is defined and ports_svn_uptodate|failed
+
+- name: Create distfiles dir
+  file: path=/usr/ports/distfiles state=directory mode=0755
+  tags:
+  - comb-misc
 
 - name: Install py27-psycopg2
   portinstall: name={{ item.name }} state=present use_packages=no

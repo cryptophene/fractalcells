@@ -30,4 +30,5 @@
 # - include: ipfw.yml
  - include: iocage.yml
  - include: unbound.yml
+ - include: poudriere.yml
 # - include: tarsnap.yml
