@@ -1,0 +1,181 @@
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+- name: Make sure Redmine jail is started
+  iocage: state=started tag='{{ production_jails.redmine.tag }}'
+  tags:
+  - redmine
+  - redmine-debug
+  - issues
+  register: redmine_jail
+
+- name: Enable redmine services
+  when:
+  - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
+  lineinfile: dest={{ redmine_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
+  with_items:
+  - { line: "nginx_enable=\"YES\"" }
+  tags:
+  - redmine
+  - issues
+
+- name: Create package directory
+  file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
+  tags:
+  - redmine
+  - issues
+  when:
+  - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
+  with_items:
+  - { path: '{{ redmine_jail_dir.stat.path }}/packages', mode: '755', owner: root, group: wheel }
+
+- name: Remove freebsd.conf
+  file: path={{ redmine_jail_dir.stat.path }}/etc/pkg/FreeBSD.conf state=absent
+  tags:
+  - redmine
+  - issues
+
+- name: Deploy Redmine repo config
+  template: src='{{ item.name }}.j2' dest='{{ redmine_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
+  with_items:
+  - { name: "local.conf", path: "/etc/pkg", mode: 644 }
+  when:
+  - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
+  tags:
+  - redmine
+  - issues
+
+- name: Nullfs-mount package repo
+  mount: src=/usr/local/poudriere/data/packages/build-ports name={{ redmine_jail_dir.stat.path }}packages state=mounted opts=ro fstype=nullfs
+  tags:
+  - redmine
+  - issues
+
+- name: Install redmine 
+  when:
+  - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
+  iocage: state=exec tag={{ production_jails.redmine.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.redmine.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.redmine.tag }}"
+  tags:
+  - redmine
+  - issues
+
+- name: Create directories
+  file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
+  tags:
+  - redmine
+  - issues
+  when:
+  - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
+  with_items:
+  - { path: '{{ redmine_jail_dir.stat.path }}/usr/local/etc/nginx/sites-enabled', mode: '755', owner: root, group: wheel }
+  - { path: '{{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/files/', mode: '755', owner: www, group: www }
+  - { path: '{{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/log/', mode: '755', owner: www, group: www }
+  - { path: '{{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/tmp/', mode: '755', owner: www, group: www }
+  - { path: '{{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/tmp/pdf', mode: '755', owner: www, group: www }
+  - { path: '{{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/public/', mode: '755', owner: www, group: www }
+  - { path: '{{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/public/plugin_assets', mode: '755', owner: www, group: www }
+
+- name: Create Redmine production.log file
+  file: path="{{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/log/production.log" mode=666 owner=www group=www state=touch
+  tags:
+  - redmine
+  - issues
+
+- name: Deploy Redmine configs
+  template: src='{{ item.name }}.j2' dest='{{ redmine_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
+  with_items:
+  - { name: "nginx.conf", path: "/usr/local/etc/nginx", mode: 644 }
+  - { name: "redmine.conf", path: "/usr/local/etc/nginx/sites-enabled", mode: 644 }
+  - { name: "database.yml", path: "/usr/local/www/redmine/config", mode: 644 }
+  - { name: "authmethod.sql", path: "/root", mode: 644 }
+  when:
+  - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
+  tags:
+  - redmine
+  - issues
+
+- name: Start Redmine nginx
+  iocage: state=exec tag={{ redmine_jail.uuid }} cmd="/bin/sh -c \"service nginx restart\""
+  when:
+  - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
+  tags:
+  - redmine
+  - issues
+
+- name: Find secret token
+  stat: path={{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/config/initializers/secret_token.rb
+  register: redmine_secret_token
+  tags:
+  - redmine
+  - issues
+
+- name: Generate Redmine secret token
+  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"cd /usr/local/www/redmine && bundle exec rake generate_secret_token\""
+  when:
+  - not redmine_secret_token.stat.exists
+  tags:
+  - redmine
+  - issues
+
+- name: Find db cookie
+  stat: path={{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/.db.migrated
+  register: redmine_db_migrated_cookie
+  tags:
+  - redmine
+  - issues
+
+- name: Generate Redmine database objects
+  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"cd /usr/local/www/redmine && RAILS_ENV=production bundle exec rake db:migrate && touch .db.migrated\""
+  when:
+  - not redmine_db_migrated_cookie.stat.exists
+  tags:
+  - redmine
+  - issues
+
+- name: Find db defaults cookie
+  stat: path={{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/.db.defaults
+  register: redmine_db_defaults_cookie
+  tags:
+  - redmine
+  - issues
+
+- name: Load Redmine database defaults
+  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"cd /usr/local/www/redmine && echo en | RAILS_ENV=production bundle exec rake redmine:load_default_data && touch .db.defaults\""
+  when:
+  - not redmine_db_defaults_cookie.stat.exists
+  tags:
+  - redmine
+  - issues
+
+- name: Load Redmine Authmethod SQL
+  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ redmine_data.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ redmine_data.user }} {{ redmine_data.name }} < /root/authmethod.sql \""
+  tags:
+  - redmine
+  - redmine-debug
+  - issues
+
+- name: Remove Redmine Authmethod SQL
+  file: path={{ redmine_jail_dir.stat.path }}/root/authmethod.sql state=absent
+  tags:
+  - redmine
+  - issues
