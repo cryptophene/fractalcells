@@ -26,6 +26,7 @@
   tags:
   - ldap
   - ldap-service
+  - ldap-debug
   - auth
   register: openldap_jail
 
@@ -70,6 +71,7 @@
   with_items:
   - { name: "slapd.conf", path: "/usr/local/etc/openldap", mode: 644 }
   - { name: "ldap.conf", path: "/usr/local/etc/openldap", mode: 644 }
+  - { name: "tree.ldif", path: "/root/", mode: 644 }
   #- { name: "postgresql.conf", path: "/usr/local/etc", mode: 644 }
   register: openldap_config_deployed
   when:
@@ -120,3 +122,21 @@
   - ldap
   - ldap-service
   - auth
+
+- name: Does tree need to be imported?
+  iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \" ldapsearch -x -h localhost -p 389 -D cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}  -w '{{ openldap_data.password }}' -b dc={{ external_domain.split('.') | join(',dc=') }} uid={{ user_handle }} | grep numEntries\" "
+  register: ldap_user_present
+  ignore_errors: true
+  tags:
+  - ldap
+  - ldap-debug
+  - auth
+
+- name: import tree.ldif
+  iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"slapadd -l /root/tree.ldif\" "
+  tags:
+  - ldap
+  - ldap-debug
+  - auth
+  when:
+  - ldap_user_present|failed

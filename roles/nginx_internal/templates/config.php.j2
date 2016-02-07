@@ -324,7 +324,7 @@ $servers->setValue('server','host','{{ production_jails.openldap.ip }}');
    the directory for users (ie, if your LDAP server does not allow anonymous
    binds. */
 // $servers->setValue('login','bind_id','');
-  $servers->setValue('login','bind_id','cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}');
+$servers->setValue('login','bind_id','cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}');
 
 /* Your LDAP password. If you specified an empty bind_id above, this MUST also
    be blank. */

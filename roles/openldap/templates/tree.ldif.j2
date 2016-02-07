@@ -1,0 +1,34 @@
+# Entry 1: base dc.
+dn: dc={{ external_domain.split('.') | join(',dc=') }}
+dc: {{ external_domain.split('.') | first }}
+description: {{ openldap_data.server_name }}
+o: {{ certificate_authority.organization }}
+objectclass: dcObject
+objectclass: organization
+
+# Entry 2: cn=users,dc=<your org>
+dn: cn=users,dc={{ external_domain.split('.') | join(',dc=') }}
+cn: users
+gidnumber: 500
+objectclass: posixGroup
+objectclass: top
+
+# Entry 3: ou=people,dc=<your org>
+dn: ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
+objectclass: top
+objectclass: organizationalUnit
+ou: people
+
+# Entry 4: cn=<your user>,ou=people,dc=<your org>
+dn: cn={{ user_name}},ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
+cn: {{ user_name }}
+gidnumber: 500
+givenname: {{ user_name.split(' ')[0]  }}
+homedirectory: /home/{{ user_name }}
+objectclass: inetOrgPerson
+objectclass: posixAccount
+objectclass: top
+sn: {{ user_name.split(' ')[-1]  }}
+uid: {{ user_handle }}
+uidnumber: 1000
+userpassword: {{ user_password }}
