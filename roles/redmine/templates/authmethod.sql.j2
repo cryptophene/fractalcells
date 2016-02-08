@@ -1,2 +1,35 @@
+---
+--- Add LDAP auth method from the beginning.
+---
 INSERT INTO auth_sources (id, type, name, host, port, account, account_password, base_dn, attr_login, attr_firstname, attr_lastname, attr_mail, onthefly_register, tls, filter, timeout) VALUES (1, 'AuthSourceLdap', '{{ production_jails.openldap.hostname }}', '{{ production_jails.openldap.ip }}', 389, 'cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}', '{{ openldap_data.password}}', 'dc={{ external_domain.split('.') | join(',dc=') }}', 'uid', 'givenName', 'sn', '', true, false, '(objectClass=posixAccount)', NULL);
+
+---
+--- Some sensible default settings
+---
+
+INSERT INTO settings (id, name, value, updated_on) VALUES (1, 'login_required', '1', '2016-02-08 08:51:53.154225');
+INSERT INTO settings (id, name, value, updated_on) VALUES (2, 'autologin', '0', '2016-02-08 08:51:53.161007');
+INSERT INTO settings (id, name, value, updated_on) VALUES (3, 'self_registration', '0', '2016-02-08 08:51:53.165141');
+INSERT INTO settings (id, name, value, updated_on) VALUES (4, 'unsubscribe', '0', '2016-02-08 08:51:53.168939');
+INSERT INTO settings (id, name, value, updated_on) VALUES (5, 'password_min_length', '8', '2016-02-08 08:51:53.173212');
+INSERT INTO settings (id, name, value, updated_on) VALUES (6, 'lost_password', '1', '2016-02-08 08:51:53.17721');
+INSERT INTO settings (id, name, value, updated_on) VALUES (7, 'openid', '0', '2016-02-08 08:51:53.180975');
+INSERT INTO settings (id, name, value, updated_on) VALUES (8, 'rest_api_enabled', '0', '2016-02-08 08:51:53.184634');
+INSERT INTO settings (id, name, value, updated_on) VALUES (9, 'jsonp_enabled', '0', '2016-02-08 08:51:53.188928');
+INSERT INTO settings (id, name, value, updated_on) VALUES (10, 'session_lifetime', '0', '2016-02-08 08:51:53.192968');
+INSERT INTO settings (id, name, value, updated_on) VALUES (11, 'session_timeout', '0', '2016-02-08 08:51:53.196798');
+INSERT INTO settings (id, name, value, updated_on) VALUES (12, 'app_title', 'Redmine', '2016-02-08 08:56:30.499434');
+INSERT INTO settings (id, name, value, updated_on) VALUES (13, 'welcome_text', '', '2016-02-08 08:56:30.505312');
+INSERT INTO settings (id, name, value, updated_on) VALUES (14, 'attachment_max_size', '5120', '2016-02-08 08:56:30.51017');
+INSERT INTO settings (id, name, value, updated_on) VALUES (15, 'per_page_options', '25,50,100', '2016-02-08 08:56:30.514861');
+INSERT INTO settings (id, name, value, updated_on) VALUES (16, 'activity_days_default', '30', '2016-02-08 08:56:30.5194');
+INSERT INTO settings (id, name, value, updated_on) VALUES (17, 'host_name', 'asdfasdf', '2016-02-08 08:56:30.523923');
+INSERT INTO settings (id, name, value, updated_on) VALUES (18, 'protocol', 'http', '2016-02-08 08:56:30.528073');
+INSERT INTO settings (id, name, value, updated_on) VALUES (19, 'text_formatting', 'textile', '2016-02-08 08:56:30.532659');
+INSERT INTO settings (id, name, value, updated_on) VALUES (20, 'cache_formatted_text', '0', '2016-02-08 08:56:30.537925');
+INSERT INTO settings (id, name, value, updated_on) VALUES (21, 'wiki_compression', '', '2016-02-08 08:56:30.543741');
+INSERT INTO settings (id, name, value, updated_on) VALUES (22, 'feeds_limit', '15', '2016-02-08 08:56:30.54903');
+INSERT INTO settings (id, name, value, updated_on) VALUES (23, 'file_max_size_displayed', '512', '2016-02-08 08:56:30.554127');
+INSERT INTO settings (id, name, value, updated_on) VALUES (24, 'diff_max_lines_displayed', '1500', '2016-02-08 08:56:30.558772');
+INSERT INTO settings (id, name, value, updated_on) VALUES (25, 'repositories_encodings', '', '2016-02-08 08:56:30.563626');
 

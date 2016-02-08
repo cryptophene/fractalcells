@@ -1,0 +1,32 @@
+# = Redmine configuration file
+# DO NOT USE TABS! Use 2 spaces instead of tabs for identation.
+
+# default configuration options for all environments
+default:
+  email_delivery:
+    delivery_method: :smtp
+    smtp_settings:
+      authentication: nil
+      address: 10.1.0.7
+      port: 25
+      domain: perceivon.net
+
+  attachments_storage_path: /usr/local/www/redmine/files/
+  autologin_cookie_name:
+  autologin_cookie_path:
+  autologin_cookie_secure:
+
+  scm_subversion_command:
+  scm_mercurial_command:
+  scm_git_command: /usr/local/bin/git
+  scm_cvs_command:
+  scm_bazaar_command:
+  scm_darcs_command:
+  scm_stderr_log_file:
+  database_cipher_key:
+  rmagick_font_path:
+
+production:
+
+development:
+

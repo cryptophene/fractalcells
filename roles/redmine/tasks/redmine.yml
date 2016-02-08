@@ -25,7 +25,6 @@
   iocage: state=started tag='{{ production_jails.redmine.tag }}'
   tags:
   - redmine
-  - redmine-debug
   - issues
   register: redmine_jail
 
@@ -66,7 +65,7 @@
   - issues
 
 - name: Nullfs-mount package repo
-  mount: src=/usr/local/poudriere/data/packages/build-ports name={{ redmine_jail_dir.stat.path }}packages state=mounted opts=ro fstype=nullfs
+  mount: src=/usr/local/poudriere/data/packages/build-ports name={{ redmine_jail_dir.stat.path }}packages state=mounted opts=late,ro fstype=nullfs
   tags:
   - redmine
   - issues
@@ -107,6 +106,7 @@
   - { name: "nginx.conf", path: "/usr/local/etc/nginx", mode: 644 }
   - { name: "redmine.conf", path: "/usr/local/etc/nginx/sites-enabled", mode: 644 }
   - { name: "database.yml", path: "/usr/local/www/redmine/config", mode: 644 }
+  - { name: "configuration.yml", path: "/usr/local/www/redmine/config", mode: 644 }
   - { name: "authmethod.sql", path: "/root", mode: 644 }
   when:
   - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
@@ -171,7 +171,6 @@
   iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ redmine_data.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ redmine_data.user }} {{ redmine_data.name }} < /root/authmethod.sql \""
   tags:
   - redmine
-  - redmine-debug
   - issues
 
 - name: Remove Redmine Authmethod SQL
