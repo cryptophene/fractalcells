@@ -42,6 +42,9 @@ push "route {{ internal_netmask.split('/')[0] }} 255.255.255.0 {{ openvpn_data.i
 # Push our internal DNS to the clients
 push "dhcp-option DNS {{ internal_ip }}"
 
+# Force clients to use this VPN tunnel for _everything_
+#push "redirect-gateway def1"
+
 # Keep-Alive
 keepalive 10 120 
 
