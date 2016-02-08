@@ -47,11 +47,22 @@
   - { path: '{{ nginx_proxy_jail_dir.stat.path }}/usr/local/etc/nginx/conf.d', mode: '755', owner: root, group: wheel }
   - { path: '{{ nginx_proxy_jail_dir.stat.path }}/var/log/nginx', mode: '755', owner: www, group: www }
 
+- name: Determine if {{ production_jails.nginx_proxy.tag }} jail needs certs
+  stat: path='{{ openldap_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.cert.pem'
+  register: nginx_proxy_cert
+  tags:
+  - nginx_proxy
+  - nginx
+  - certs
+
 - name: Copy Proxy Key, CSR and Cert to the {{ production_jails.nginx_proxy.tag }} jail
   shell: cp -a {{ item.origin }} {{ item.destination }}
   tags:
   - nginx_proxy
   - proxy
+  - certs
+  when:
+  - not nginx_proxy_cert.stat.exists
   with_items:
   - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.cert.pem', destination: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.cert.pem' }
   - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem', destination: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.csr.pem' }
@@ -64,6 +75,9 @@
   tags:
   - nginx_proxy
   - proxy
+  - certs
+  when:
+  - not nginx_proxy_cert.stat.exists
   with_items:
   - { path: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.cert.pem', mode: 444, owner: 80, group: 80 }
   - { path: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.csr.pem', mode: 444, owner: 80, group: 80 }

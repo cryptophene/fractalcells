@@ -25,8 +25,6 @@
   iocage: state=started tag='{{ production_jails.openldap.tag }}'
   tags:
   - ldap
-  - ldap-service
-  - ldap-debug
   - auth
   register: openldap_jail
 
@@ -80,14 +78,23 @@
   - debug
   - auth
 
+- name: Determine if {{ production_jails.openldap.tag }} jail needs certs
+  stat: path='{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem'
+  register: openldap_proxy_cert
+  tags:
+  - ldap
+  - auth
+  - certs
+  - ldap-service
+
 - name: Copy Proxy Key, CSR and Cert to the {{ production_jails.openldap.tag }} jail
   shell: cp -a {{ item.origin }} {{ item.destination }}
   tags:
   - ldap
   - auth
   - certs
-  - ldap-service
   when:
+  - not openldap_proxy_cert.stat.exists
   - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
   with_items:
   - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.cert.pem', destination: '{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem' }
@@ -100,8 +107,9 @@
   tags:
   - ldap
   - auth
-  - ldap-service
   - certs
+  when:
+  - not openldap_proxy_cert.stat.exists
   with_items:
   - { path: '{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem', mode: 444, owner: 389, group: 389 }
   - { path: '{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.csr.pem', mode: 444, owner: 389, group: 389 }
@@ -112,7 +120,6 @@
   iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"service slapd restart\""
   tags:
   - ldap
-  - ldap-service
   - auth
 
 - name: Does tree need to be imported?
@@ -121,14 +128,12 @@
   ignore_errors: true
   tags:
   - ldap
-  - ldap-debug
   - auth
 
 - name: import tree.ldif
   iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"slapadd -l /root/tree.ldif\" "
   tags:
   - ldap
-  - ldap-debug
   - auth
   when:
   - ldap_user_present|failed
