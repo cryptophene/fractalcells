@@ -37,7 +37,7 @@
   - { path: '{{ certificate_authority.certificate_directory }}/proxy/index.txt', mode: 755, state: touch }
   - { path: '{{ certificate_authority.certificate_directory }}/proxy/serial', mode: 755, state: touch }
 
-- shell: echo 1000 > '{{ certificate_authority.certificate_directory }}/proxy/serial' 
+- shell: echo 1100 > '{{ certificate_authority.certificate_directory }}/proxy/serial'
   tags:
   - proxy
   - certs

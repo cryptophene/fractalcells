@@ -59,7 +59,7 @@
   when: not root_ca_serial.stat.exists
   tags:
   - certs
-- shell: echo 1000 > '{{ certificate_authority.certificate_directory }}/ca/intermediate/serial'
+- shell: echo 1010 > '{{ certificate_authority.certificate_directory }}/ca/intermediate/serial'
   when: not intermediate_ca_serial.stat.exists
   tags:
   - certs
