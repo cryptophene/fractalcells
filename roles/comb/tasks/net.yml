@@ -49,3 +49,6 @@
 # 10.1 netif calls routing which is broken for loopback devices
 - name: Add internal ip to jails network interface
   shell: service netif restart lo1 || true
+
+- name: Add network forwarding sysctl.
+  sysctl: name=net.inet.ip.forwarding=1 state=present sysctl_set=yes
