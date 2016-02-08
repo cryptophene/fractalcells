@@ -7,7 +7,7 @@
 
 import sys
 
-LICENSE ="""# Copyright 2015, Perceivon Hosting Inc.
+LICENSE ="""# Copyright 2015-2016, Perceivon Hosting Inc.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
