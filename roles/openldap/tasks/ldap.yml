@@ -66,13 +66,11 @@
   - { path: '{{ openldap_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/', mode: '700', owner: 389, group: 389 }
 
 - name: Deploy OpenLDAP config files
-  #when: openldap_jail_started|success
   template: src='{{ item.name }}.j2' dest='{{ openldap_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
   with_items:
   - { name: "slapd.conf", path: "/usr/local/etc/openldap", mode: 644 }
   - { name: "ldap.conf", path: "/usr/local/etc/openldap", mode: 644 }
   - { name: "tree.ldif", path: "/root/", mode: 644 }
-  #- { name: "postgresql.conf", path: "/usr/local/etc", mode: 644 }
   register: openldap_config_deployed
   when:
   - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
@@ -82,12 +80,6 @@
   - debug
   - auth
 
-#- name: Initialize OpenLDAP 9.4
-#  when: openldap_jail_started|success
-#  shell: iocage exec -u root {{ production_jails.openldap.tag }} /bin/sh -c "service openldap initdb"
-#  tags:
-#  - ldap
-#  - auth
 - name: Copy Proxy Key, CSR and Cert to the {{ production_jails.openldap.tag }} jail
   shell: cp -a {{ item.origin }} {{ item.destination }}
   tags:
