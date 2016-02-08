@@ -1,0 +1,13 @@
+# Support for TUN devices
+#
+[devfsrules_unhide_tun=5]
+add path tun0 unhide
+
+# Rules for OpenVPN jail
+#
+[devfsrules_jail_openvpn=6]
+add include $devfsrules_hide_all
+add include $devfsrules_unhide_basic
+add include $devfsrules_unhide_login
+add include $devfsrules_unhide_tun
+

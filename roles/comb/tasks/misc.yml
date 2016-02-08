@@ -89,5 +89,7 @@
   with_items:
   - { name: "tmux.conf", path: "/usr/local/etc/tmux.conf", mode: 644 }
   - { name: "zshrc", path: "/usr/local/etc/zshrc", mode: 644 }
+  - { name: "devfs.rules", path: "/etc/devfs.rules", mode: 644 }
   tags:
   - comb-misc
+

@@ -25,7 +25,7 @@
   lineinfile:
     dest: '/etc/rc.conf'
     state: present
-    line: "cloned_interfaces=\"{{ internal_interface }}\""
+    line: "cloned_interfaces=\"{{ internal_interface }} {{ openvpn_data.interface }}\""
   register: cloned_interfaces
 
 - name: See if {{ internal_interface }} already exists
