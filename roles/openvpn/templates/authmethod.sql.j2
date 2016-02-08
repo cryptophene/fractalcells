@@ -1,2 +1,0 @@
-INSERT INTO auth_sources (id, type, name, host, port, account, account_password, base_dn, attr_login, attr_firstname, attr_lastname, attr_mail, onthefly_register, tls, filter, timeout) VALUES (1, 'AuthSourceLdap', '{{ production_jails.openldap.hostname }}', '{{ production_jails.openldap.ip }}', 389, 'cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}', '{{ openldap_data.password}}', 'dc={{ external_domain.split('.') | join(',dc=') }}', 'uid', 'givenName', 'sn', '', true, false, '(objectClass=posixAccount)', NULL);
-

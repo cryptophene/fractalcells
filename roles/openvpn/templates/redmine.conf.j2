@@ -1,9 +1,0 @@
-   server {
-        listen       80;
-        server_name {{ production_jails.redmine.hostname }}.{{ external_domain }};
-        location / {
-            root   /usr/local/www/redmine/public;
-            passenger_enabled on;
-        client_max_body_size    5m;
-        }
-}
