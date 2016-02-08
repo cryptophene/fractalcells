@@ -7,7 +7,7 @@ default:
     delivery_method: :smtp
     smtp_settings:
       authentication: nil
-      address: 10.1.0.7
+      address: {{ production_jails.opensmtpd.ip }}
       port: 25
       domain: perceivon.net
 
