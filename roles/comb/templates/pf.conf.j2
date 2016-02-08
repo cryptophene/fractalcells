@@ -1,8 +1,14 @@
 public_ip="{{ external_ip }}"
 
 ext_if="{{ external_interface }}"
+int_if="{{ internal_interface }}"
+vpn_if="{{ openvpn_data.interface }}"
+
+vpnclients="{{ openvpn_data.subnet}}"
+icmptypes = "{echoreq, unreach}"
 
 table <jails> { {{ internal_netmask }} }
+table <vpnclients> { $vpnclients }
 
 #table <sshguard> persist
 #table <known_attackers> persist
@@ -15,7 +21,15 @@ table <jails> { {{ internal_netmask }} }
 scrub in all
 
 nat pass log on $ext_if inet proto { tcp, udp, icmp } from <jails> to any -> $public_ip
+nat pass log on $vpn_if inet proto { tcp, udp, icmp } from <vpnclients> to any -> {{ openvpn_data.internal_ip }}
+
+nat pass log on $ext_if inet from $vpnclients to any -> $public_ip
 
 {% for jail in production_jails if production_jails[jail].pf is defined %}
 rdr pass log on $ext_if proto { {{ production_jails[jail].pf.proto }} } from any to $public_ip port { {{ production_jails[jail].pf.ports }} } -> {{ production_jails[jail].ip }}
 {% endfor %}
+
+pass out quick
+pass in on $vpn_if from any to any
+pass in on $int_if from any to any
+pass in inet proto icmp all icmp-type $icmptypes

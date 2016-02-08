@@ -1,0 +1,10 @@
+<LDAP>
+        URL             ldap://{{ production_jails.openldap.ip }}:389
+        BindDN          cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}
+        Password        {{ openldap_data.password }}
+        Timeout         15
+</LDAP>
+<Authorization>
+           BaseDN          "dc={{ external_domain.split('.') | join(',dc=') }}"
+           SearchFilter    "(uid=%u)"
+</Authorization>

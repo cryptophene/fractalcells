@@ -1,0 +1,70 @@
+plugin /usr/local/lib/openvpn-auth-ldap.so "/usr/local/etc/openvpn/openvpn-auth-ldap.conf"
+
+# Listen port
+port 1194
+
+# UDP is faster
+proto tcp  
+#sic!
+
+# tun is better
+dev tun0
+
+# SSL certificates and keys
+ca /usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem
+cert /usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.cert.pem
+key /usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.key.pem
+crl-verify /usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.csr.pem
+dh /usr/local/etc/openvpn/private/dh4096.pem
+
+# Use LDAP auth instead of client certs.
+client-cert-not-required
+username-as-common-name
+
+
+# Clients receive an IP address
+# out of this pool
+server {{ openvpn_data.subnet.split('/')[0] }} 255.255.255.0
+
+# Save the client <-> ip address
+# mapping. Every client will get
+# the same address everytime he
+# connects.
+ifconfig-pool-persist /openvpn/run/ipp.txt
+
+# We can't change routes or ifconfig anyway.
+ifconfig-noexec
+route-noexec
+
+# Push Routes to clients
+push "route {{ internal_netmask.split('/')[0] }} 255.255.255.0 {{ openvpn_data.internal_ip }}"
+
+# Push our internal DNS to the clients
+push "dhcp-option DNS {{ internal_ip }}"
+
+# Keep-Alive
+keepalive 10 120 
+
+# Compress
+comp-lzo
+
+# 25 Client at maximum
+max-clients 25
+
+# FIXME: Run as nobody
+user root
+group wheel
+
+# Persist some things not
+# available as 'nobody'
+persist-key
+persist-tun
+
+# Status
+status /var/log/openvpn/openvpn-status.log
+
+# Log file
+log /var/log/openvpn/openvpn.log
+
+# Log level
+verb 3

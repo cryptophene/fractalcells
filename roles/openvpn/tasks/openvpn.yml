@@ -1,0 +1,154 @@
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+
+- name: Check if tun device needs creating
+  shell: ifconfig '{{ openvpn_data.interface }}'
+  register: openvpn_ifconfig
+  ignore_errors: true
+  tags:
+  - openvpn
+  - vpn
+
+- name: Create tun device
+  shell: ifconfig '{{ openvpn_data.interface }}' create
+  when: openvpn_ifconfig|failed
+  tags:
+  - openvpn
+  - vpn
+
+- name: Make sure openvpn jail is started
+  iocage: state=started tag='{{ production_jails.openvpn.tag }}'
+  tags:
+  - openvpn
+  - vpn
+  register: openvpn_jail
+
+- name: Set VPN route
+  shell: route add -net '{{ openvpn_data.subnet }}' '{{ openvpn_data.internal_ip }}'
+  tags:
+  - openvpn
+  - vpn
+  ignore_errors: true
+
+- name: Enable openvpn services
+  when:
+  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
+  lineinfile: dest={{ openvpn_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
+  with_items:
+  - { line: "openvpn_enable=\"YES\"" }
+  tags:
+  - openvpn
+  - vpn
+
+- name: Install Openvpn
+  when:
+  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
+  iocage: state=exec tag={{ production_jails.openvpn.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.openvpn.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.openvpn.tag }}"
+  tags:
+  - openvpn
+  - vpn
+
+- name: Create directories
+  file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
+  tags:
+  - openvpn
+  - vpn
+  when:
+  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
+  with_items:
+  - { path: '{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn', mode: '755', owner: root, group: wheel }
+  - { path: '{{ openvpn_jail_dir.stat.path }}/var/log/openvpn', mode: '755', owner: nobody, group: nobody }
+  - { path: '{{ openvpn_jail_dir.stat.path }}/var/run/openvpn', mode: '755', owner: nobody, group: nobody }
+  - { path: '{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private', mode: '700', owner: root, group: wheel }
+
+- name: Determine if {{ production_jails.openvpn.tag }} jail needs certs
+  stat: path='{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.cert.pem'
+  register: openvpn_proxy_cert
+  tags:
+  - openvpn
+  - vpn
+  - certs
+
+- name: Copy Proxy Key, CSR and Cert to the {{ production_jails.openvpn.tag }} jail
+  shell: cp -a {{ item.origin }} {{ item.destination }}
+  tags:
+  - openvpn
+  - vpn
+  - certs
+  when:
+  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
+  - not openvpn_proxy_cert.stat.exists
+  with_items:
+  - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.cert.pem', destination: '{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.cert.pem' }
+  - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem', destination: '{{  openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.csr.pem' }
+  - { origin: '{{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem', destination: '{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.key.pem' }
+  - { origin: '{{ certificate_authority.certificate_directory }}/ca/intermediate/certs/{{ certificate_authority.short_name }}_ca.cert.pem', destination: '{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem' }
+
+- name: Make Proxy Key, CSR and Cert readonly
+  file: path={{ item.path }} state=file mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
+  tags:
+  - openvpn
+  - vpn
+  - certs
+  when:
+  - not openvpn_proxy_cert.stat.exists
+  with_items:
+  - { path: '{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.cert.pem', mode: 444, owner: 389, group: 389 }
+  - { path: '{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.csr.pem', mode: 444, owner: 389, group: 389 }
+  - { path: '{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.key.pem', mode: 400, owner: 389, group: 389 }
+  - { path: '{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem', mode: 444, owner: 389, group: 389 }
+
+- name: See if DH4096 cert is present
+  stat: path='{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/dh4096.pem'
+  register: openvpn_dh_4096
+  tags:
+  - openvpn
+  - vpn
+
+- name: Deploy DH 4096 cert
+  shell: openssl dhparam -out {{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/dh4096.pem 4096
+  when:
+  - not openvpn_dh_4096.stat.exists
+  tags:
+  - openvpn
+  - vpn
+
+- name: Deploy OpenVPN configs
+  template: src='{{ item.name }}.j2' dest='{{ openvpn_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
+  with_items:
+  - { name: "openvpn.conf", path: "/usr/local/etc/openvpn", mode: 644 }
+  - { name: "openvpn-auth-ldap.conf", path: "/usr/local/etc/openvpn", mode: 644 }
+  when:
+  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
+  tags:
+  - openvpn
+  - vpn
+
+- name: Start OpenVPN
+  iocage: state=exec tag={{ openvpn_jail.uuid }} cmd="/bin/sh -c \"service openvpn restart\""
+  when:
+  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
+  tags:
+  - openvpn
+  - vpn
