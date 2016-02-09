@@ -49,7 +49,8 @@ If not: we do offer paid support.
 
 ## Next Steps
 
-1. Do all the things.
+1. Finish all components.
+2. Refactor roles/*/iocage.yml into a cellfactory role.
 
 ## Powered By
 
@@ -61,11 +62,11 @@ If not: we do offer paid support.
 1. [OpenSMTPD](https://www.opensmtpd.org)
 1. [PostgreSQL](https://www.postgresql.org)
 1. [OpenLDAP](https://www.openldap.org)
+1. [OpenVPN](https://www.openvpn.org)
+1. [Redmine](https://www.redmine.org)
 
 (Work in Progress)
 
-1. [OpenVPN](https://www.openvpn.org)
-1. [Redmine](https://www.redmine.org)
 1. [Zabbix](https://www.zabbix.org)
 1. [GitLab](https://www.gitlab.org)
 1. [Jenkins](https://www.jenkins-ci.org)
