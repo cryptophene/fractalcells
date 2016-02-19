@@ -64,9 +64,9 @@ If not: we do offer paid support.
 1. [OpenLDAP](https://www.openldap.org)
 1. [OpenVPN](https://www.openvpn.org)
 1. [Redmine](https://www.redmine.org)
+1. [Zabbix](https://www.zabbix.org)
 
 (Work in Progress)
 
-1. [Zabbix](https://www.zabbix.org)
 1. [GitLab](https://www.gitlab.org)
 1. [Jenkins](https://www.jenkins-ci.org)
