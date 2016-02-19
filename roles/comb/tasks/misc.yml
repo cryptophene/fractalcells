@@ -42,12 +42,7 @@
   - { name: iocage-devel }
   - { name: poudriere }
   - { name: dialog4ports }
-  # XXX: Why did I outcomment this?
-  #- { name: ruby }
-  #- { name: libyaml }
-  #- { name: libedit }
-  #- { name: ruby21-bdb }
-  #- { name: db5 }
+  - { name: curl }
   - { name: portupgrade  }
   tags:
   - comb-misc
