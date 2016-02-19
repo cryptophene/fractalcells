@@ -87,16 +87,6 @@
   - "'uuid' in zabbix_jail and (zabbix_jail['uuid'] is defined and zabbix_jail['uuid'] != '-')"
   with_items:
   - { path: '{{ zabbix_jail_dir.stat.path }}/var/log/zabbix/', mode: '755', owner: 122, group: 122 }
-#  - { path: '{{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/tmp/', mode: '755', owner: www, group: www }
-#  - { path: '{{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/tmp/pdf', mode: '755', owner: www, group: www }
-#  - { path: '{{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/public/', mode: '755', owner: www, group: www }
-#  - { path: '{{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/public/plugin_assets', mode: '755', owner: www, group: www }
-
-#- name: Create Redmine production.log file
-#  file: path="{{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/log/production.log" mode=666 owner=www group=www state=touch
-#  tags:
-#  - redmine
-#  - monitoring
 
 - name: Deploy Zabbix configs
   template: src='{{ item.name }}.j2' dest='{{ zabbix_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
@@ -109,45 +99,6 @@
   - zabbix
   - monitoring
 
-#- name: Find secret token
-#  stat: path={{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/config/initializers/secret_token.rb
-#  register: redmine_secret_token
-#  tags:
-#  - redmine
-#  - monitoring
-
-#- name: Generate Redmine secret token
-#  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"cd /usr/local/www/redmine && bundle exec rake generate_secret_token\""
-#  when:
-#  - not redmine_secret_token.stat.exists
-#  tags:
-#  - redmine
-#  - monitoring
-
-#- name: Find db cookie
-#  stat: path={{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/.db.migrated
-#  register: redmine_db_migrated_cookie
-#  tags:
-#  - redmine
-#  - monitoring
-#
-#- name: Generate Redmine database objects
-#  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"cd /usr/local/www/redmine && RAILS_ENV=production bundle exec rake db:migrate && touch .db.migrated\""
-#  when:
-#  - not redmine_db_migrated_cookie.stat.exists
-#  tags:
-#  - redmine
-#  - monitoring
-
-#
-#- name: Load Redmine database defaults
-#  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"cd /usr/local/www/redmine && echo en | RAILS_ENV=production bundle exec rake redmine:load_default_data && touch .db.defaults\""
-#  when:
-#  - not redmine_db_defaults_cookie.stat.exists
-#  tags:
-#  - redmine
-#  - monitoring
-#
 - name: Find Zabbix db prepared cookie
   stat: path={{ zabbix_jail_dir.stat.path }}/root/.db.prepared
   register: zabbix_db_prepared_cookie
@@ -180,8 +131,8 @@
   - zabbix
   - monitoring
 
-- name: Remove Redmine Authmethod SQL
-  file: path={{ redmine_jail_dir.stat.path }}/root/authmethod_redmine.sql state=absent
+- name: Remove Zabbix Authmethod SQL
+  file: path={{ redmine_jail_dir.stat.path }}/root/authmethod_zabbix.sql state=absent
   tags:
   - redmine
   - issues
