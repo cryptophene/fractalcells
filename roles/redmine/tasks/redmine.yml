@@ -178,3 +178,10 @@
   tags:
   - redmine
   - issues
+
+- name: Preload Redmine
+  shell: sleep 10 && fetch -o - http://{{ production_jails.redmine.ip }}:80/
+  ignore_errors: yes
+  tags:
+  - redmine
+  - issues
