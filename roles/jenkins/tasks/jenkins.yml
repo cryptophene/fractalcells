@@ -1,0 +1,102 @@
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+- name: Make sure Jenkins jail is started
+  iocage: state=started tag='{{ production_jails.jenkins.tag }}'
+  tags:
+  - jenkins
+  - jenkins-debug
+  - ci
+  register: jenkins_jail
+
+- name: Enable jenkins services
+  when:
+  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
+  lineinfile: dest={{ jenkins_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
+  with_items:
+  - { line: "jenkins_enable=\"YES\"" }
+  tags:
+  - jenkins
+  - ci
+
+- name: Install jenkins pkgs
+  when:
+  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
+  iocage: state=exec tag={{ production_jails.jenkins.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.jenkins.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.jenkins.tag }}"
+  tags:
+  - jenkins
+  - ci
+
+- name: Create directories
+  file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
+  tags:
+  - jenkins
+  - ci
+  when:
+  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
+  with_items:
+  - { path: '{{ jenkins_jail_dir.stat.path }}/usr/local/jenkins/', mode: '755', owner: 818, group: 818 }
+
+- name: Start Jenkins
+  iocage: state=exec tag={{ jenkins_jail.uuid }} cmd="/bin/sh -c \"service jenkins restart\""
+  when:
+  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
+  tags:
+  - jenkins
+  - ci
+
+- name: Preload Jenkins
+  shell: sleep 60 && fetch -o - http://{{ production_jails.jenkins.ip }}:8180/jenkins/
+  ignore_errors: yes
+  tags:
+  - jenkins
+  - ci
+
+- name: Obtain LDAP keyed password
+  shell:  curl -d 'script=import hudson.util.Secret;def secret = Secret.fromString("{{ openldap_data.password }}");println(secret.getEncryptedValue())' http://{{ production_jails.jenkins.ip }}:8180/jenkins/scriptText/
+  register: jenkins_ldap_hash
+  tags:
+  - jenkins
+  - ci
+
+- name: Deploy Jenkins configs Pt. I
+  template: src='{{ item.name }}.j2' dest='{{ jenkins_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644 owner=818 group=818
+  with_items:
+  - { name: "config.xml", path: "/usr/local/jenkins", mode: 644 }
+  - { name: "jenkins.model.JenkinsLocationConfiguration.xml", path: "/usr/local/jenkins", mode: 644 }
+  - { name: "hudson.tasks.Mailer.xml", path: "/usr/local/jenkins", mode: 644 }
+  when:
+  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
+  tags:
+  - jenkins
+  - jenkins-debug
+  - ci
+
+- name: Restart Jenkins
+  iocage: state=exec tag={{ jenkins_jail.uuid }} cmd="/bin/sh -c \"service jenkins restart\""
+  when:
+  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
+  tags:
+  - jenkins
+  - ci
+
