@@ -56,11 +56,11 @@
   lineinfile: dest=/usr/local/etc/poudriere.d/build-make.conf line={{ item.line }} regexp={{ item.regexp }}create=yes
   with_items:
   - { line: "DEFAULT_VERSIONS=pgsql=9.4", regexp: "^DEFAULT_VERSIONS=" }
-  - { line: "OPTIONS_UNSET=DOCS EXAMPLES MYSQL MYSQL2 APACHE APACHE22 APACHE24 THIN X11 APNG PNGTEST GNUTLS", regexp: "^OPTIONS_UNSET=" }
+  - { line: "OPTIONS_UNSET=DOCS EXAMPLES MYSQL MYSQL2 MYSQLI APACHE APACHE22 APACHE24 THIN X11 APNG PNGTEST GNUTLS", regexp: "^OPTIONS_UNSET=" }
   - { line: "OPTIONS_SET=PGSQL POSTGRESQL PASSENGER NGINX PNG LDAP LDAPS OPENSSL", regexp: "^OPTIONS_SET="  }
   tags:
   - comb-poudriere
-- name: Build packages for Redmine
-  shell:  poudriere bulk -j build -p ports www/redmine www/nginx
+- name: Build packages for Redmine and Zabbix
+  shell:  poudriere bulk -j build -p ports www/redmine www/nginx net-mgmt/zabbix24-server net-mgmt/zabbix24-agent net-mgmt/zabbix24-frontend
   tags:
   - comb-poudriere

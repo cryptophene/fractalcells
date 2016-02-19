@@ -24,6 +24,7 @@
                 include fastcgi_params;
         }
 
+#XXX: relink to /phppgadmin
         location /phpPgAdmin {
                 alias /usr/local/www/phpPgAdmin;
                 index index.php index.html index.htm;
@@ -34,6 +35,24 @@
                 fastcgi_index index.php;
                 fastcgi_param SCRIPT_FILENAME $request_filename;
                 include fastcgi_params;
+        }
+
+        location /zabbix {
+                alias /usr/local/www/zabbix24;
+                index index.php index.html index.htm;
+
+        location ~ .*\.php$ {
+                root /usr/local/www;
+                if ($request_filename !~* zabbix24) {
+                        rewrite ^/zabbix(/.*)?$ /zabbix24$1;
+                }
+                fastcgi_intercept_errors on;
+                fastcgi_pass 127.0.0.1:9000;
+                fastcgi_index index.php;
+                fastcgi_param SCRIPT_FILENAME $request_filename;
+                include fastcgi_params;
+		fastcgi_read_timeout 300;
+        }
         }
 
         location /nginx_status {

@@ -28,7 +28,23 @@
   - proxy
   register: nginx_internal_jail
 
-- name: Install NGINX
+- name: Deploy pkg repo config
+  template: src='{{ item.name }}.j2' dest='{{ nginx_internal_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
+  with_items:
+  - { name: "local.conf", path: "/etc/pkg", mode: 644 }
+  when:
+  - "'uuid' in nginx_internal_jail and (nginx_internal_jail['uuid'] is defined and nginx_internal_jail['uuid'] != '-')"
+  tags:
+  - nginx_internal
+  - proxy
+
+- name: Nullfs-mount package repo
+  mount: src=/usr/local/poudriere/data/packages/build-ports name={{ nginx_internal_jail_dir.stat.path }}packages state=mounted opts=late,ro fstype=nullfs
+  tags:
+  - nginx_internal
+  - proxy
+
+- name: Install NGINX and components
   when:
   - "'uuid' in nginx_internal_jail and (nginx_internal_jail['uuid'] is defined and nginx_internal_jail['uuid'] != '-')"
   run_once: true
@@ -41,7 +57,6 @@
   file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
   tags:
   - nginx_internal
-  - nginx_internal-debug
   - proxy
   with_items:
   - { path: '{{ nginx_internal_jail_dir.stat.path }}/usr/local/etc/nginx/conf.d', mode: '755', owner: root, group: wheel }
@@ -56,10 +71,11 @@
   with_items:
   - { name: "nginx.conf", path: "/usr/local/etc/nginx", mode: 644, owner: root, group: wheel  }
   - { name: "php-fpm.conf", path: "/usr/local/etc", mode: 644, owner: root, group: wheel  }
-  - { name: "phpstaradmin.conf", path: "/usr/local/etc/php-fpm.d", mode: 644, owner: root, group: wheel   }
+#  - { name: "phpstaradmin.conf", path: "/usr/local/etc/php-fpm.d", mode: 644, owner: root, group: wheel   }
   - { name: "internal.conf", path: "/usr/local/etc/nginx/conf.d", mode: 644, owner: root, group: wheel  }
   - { name: "config.php", path: "/usr/local/www/phpldapadmin/config", mode: 600, owner: www, group: www }
   - { name: "config.inc.php", path: "/usr/local/www/phpPgAdmin/conf", mode: 600, owner: www, group: www }
+  - { name: "zabbix.conf.php", path: "/usr/local/www/zabbix24/conf", mode: 600, owner: www, group: www }
   register: nginx_internal_config_deployed
   tags:
   - nginx_internal
@@ -71,8 +87,8 @@
   - "'uuid' in nginx_internal_jail and (nginx_internal_jail['uuid'] is defined and nginx_internal_jail['uuid'] != '-')"
   lineinfile: dest={{ nginx_internal_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
   with_items:
-          - { line: "nginx_enable=\"YES\"" }
-          - { line: "php_fpm_enable=\"YES\"" }
+  - { line: "nginx_enable=\"YES\"" }
+  - { line: "php_fpm_enable=\"YES\"" }
   tags:
   - nginx_internal
   - proxy

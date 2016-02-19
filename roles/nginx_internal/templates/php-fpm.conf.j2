@@ -12,7 +12,7 @@
 ; Relative path can also be used. They will be prefixed by:
 ;  - the global prefix if it's been set (-p argument)
 ;  - /usr/local otherwise
-include=etc/php-fpm.d/*.conf
+;include=etc/php-fpm.d/*.conf
 
 ;;;;;;;;;;;;;;;;;;
 ; Global Options ;
@@ -532,7 +532,13 @@ pm.max_spare_servers = 3
 ;                specified at startup with the -d argument
 # TODO: figure out sendmail relaying through 'mx' jail
 ;php_admin_value[sendmail_path] = /usr/sbin/sendmail -t -i -f www@my.domain.com
-php_flag[display_errors] = off
-php_admin_value[error_log] = /var/log/fpm-php/www.log
+php_flag[display_errors] = on
+php_admin_value[error_log] = /var/log/php-fpm/www.error.log
 php_admin_flag[log_errors] = on
 ;php_admin_value[memory_limit] = 32M
+request_terminate_timeout = 300
+php_admin_value[max_input_time] = 300
+php_admin_value[max_execution_time] = 300
+php_admin_value[post_max_size] = 16M
+php_admin_value[always_populate_raw_post_data] = -1
+php_admin_value[date.timezone] = UTC

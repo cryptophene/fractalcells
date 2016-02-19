@@ -21,6 +21,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
+# XXX: Refactor idea:
+# Figure out how with_dict could be used to store/register variables.
+
 # redmine
 - name: Check if creating {{ redmine_data.name }} database is necessary
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT datname FROM pg_database WHERE datname = \\\'{{ redmine_data.name }}\\\' | psql template1 | grep {{ redmine_data.name }}\" "
@@ -29,7 +32,7 @@
   tags:
   - db
   - pgsql
-  - pgsql-debug
+  - pgsql-dbs
 
 - name: Create {{ redmine_data.name }} database
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE DATABASE {{ redmine_data.name }} WITH OWNER = {{ redmine_data.user }} | psql template1 \" "
@@ -39,4 +42,24 @@
   tags:
   - db
   - pgsql
-  - pgsql-debug
+  - pgsql-dbs
+
+# zabbix
+- name: Check if creating {{ zabbix_data.name }} database is necessary
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT datname FROM pg_database WHERE datname = \\\'{{ zabbix_data.name }}\\\' | psql template1 | grep {{ zabbix_data.name }}\" "
+  register: zabbix_db_present
+  ignore_errors: true
+  tags:
+  - db
+  - pgsql
+  - pgsql-dbs
+
+- name: Create {{ zabbix_data.name }} database
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE DATABASE {{ zabbix_data.name }} WITH OWNER = {{ zabbix_data.user }} | psql template1 \" "
+  #iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE DATABASE {{ zabbix_data.name }} WITH OWNER = \\\'{{ postgresql_data.password }}\\\' | psql template1 \" "
+  when:
+  - zabbix_db_present | failed
+  tags:
+  - db
+  - pgsql
+  - pgsql-dbs

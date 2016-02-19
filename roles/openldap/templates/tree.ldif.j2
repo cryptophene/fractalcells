@@ -32,3 +32,18 @@ sn: {{ user_name.split(' ')[-1]  }}
 uid: {{ user_handle }}
 uidnumber: 1000
 userpassword: {{ user_password }}
+
+
+# Entry 5: cn=Zabbix admin,ou=people,dc=02,dc=perceivon,dc=net
+dn: cn=Zabbix admin,ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
+cn:  Zabbix admin
+gidnumber: 500
+homedirectory: /home/Zabbix
+loginshell: /bin/csh
+objectclass: inetOrgPerson
+objectclass: posixAccount
+objectclass: top
+sn: Zabbix admin
+uid: Admin
+uidnumber: 1001
+userpassword: {{ zabbix_data.ldap_password }}

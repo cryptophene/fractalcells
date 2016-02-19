@@ -1,0 +1,71 @@
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+- name: Check if zabbix jail already exists
+  iocage: state=exists tag='{{ production_jails.zabbix.tag }}'
+  register: zabbix_jail
+  tags:
+  - iocage-zabbix
+  - iocage-jails
+  - zabbix
+  - monitoring
+
+- name: Create zabbix jail {{ production_jails.zabbix.tag }}
+  iocage: state=cloned clone_from='{{ template_jail.uuid }}' tag={{ production_jails.zabbix.tag }} properties="ip4_addr='{{ production_jails.zabbix.interface }}|{{ production_jails.zabbix.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
+  when:
+  - "'uuid' in zabbix_jail and (zabbix_jail['uuid'] is not defined or zabbix_jail['uuid'] == '-')"
+  tags:
+  - iocage-zabbix
+  - iocage-jails
+  - zabbix
+  - monitoring
+
+- name: Find UUID for {{ production_jails.zabbix.tag  }}
+  iocage: state=exists tag='{{ production_jails.zabbix.tag }}'
+  changed_when: false
+  register: zabbix_jail
+  tags:
+  - iocage-zabbix
+  - iocage-jails
+  - zabbix
+  - monitoring
+
+- name: Register jail's root diretory
+  stat: path='/iocage/jails/{{ zabbix_jail.uuid }}/root/'
+  register: zabbix_jail_dir
+  tags:
+  - iocage-zabbix
+  - iocage-jails
+  - zabbix
+  - monitoring
+
+- assert:
+    that:
+      - zabbix_jail_dir is defined
+      - zabbix_jail_dir.stat.exists
+      - zabbix_jail_dir.stat.isdir
+  tags:
+  - iocage-zabbix
+  - iocage-jails
+  - zabbix
+  - monitoring

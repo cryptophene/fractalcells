@@ -26,6 +26,8 @@
   tags:
   - pgsql
   - pgsql-debug
+  - pgsql-roles
+  - pgsql-dbs
   register: postgresql_jail
 
 #- name: debug postgresql_jail_dir

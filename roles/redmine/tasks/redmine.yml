@@ -107,7 +107,7 @@
   - { name: "redmine.conf", path: "/usr/local/etc/nginx/sites-enabled", mode: 644 }
   - { name: "database.yml", path: "/usr/local/www/redmine/config", mode: 644 }
   - { name: "configuration.yml", path: "/usr/local/www/redmine/config", mode: 644 }
-  - { name: "authmethod.sql", path: "/root", mode: 644 }
+  - { name: "authmethod_redmine.sql", path: "/root", mode: 644 }
   when:
   - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
   tags:
@@ -168,13 +168,13 @@
   - issues
 
 - name: Load Redmine Authmethod SQL
-  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ redmine_data.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ redmine_data.user }} {{ redmine_data.name }} < /root/authmethod.sql \""
+  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ redmine_data.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ redmine_data.user }} {{ redmine_data.name }} < /root/authmethod_redmine.sql \""
   tags:
   - redmine
   - issues
 
 - name: Remove Redmine Authmethod SQL
-  file: path={{ redmine_jail_dir.stat.path }}/root/authmethod.sql state=absent
+  file: path={{ redmine_jail_dir.stat.path }}/root/authmethod_redmine.sql state=absent
   tags:
   - redmine
   - issues

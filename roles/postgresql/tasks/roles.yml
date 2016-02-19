@@ -30,6 +30,7 @@
   tags:
   - db
   - pgsql
+  - pgsql-roles
 
 - name: Create PostgreSQL user
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE ROLE {{ postgresql_data.user }} WITH SUPERUSER LOGIN CREATEDB CREATEROLE ENCRYPTED PASSWORD \\\'{{ postgresql_data.password }}\\\' | psql template1 \" "
@@ -38,6 +39,7 @@
   tags:
   - db
   - pgsql
+  - pgsql-roles
 
 # redmine user
 - name: Check if creating {{ redmine_data.user }} user is necessary
@@ -47,6 +49,7 @@
   tags:
   - db
   - pgsql
+  - pgsql-roles
 
 - name: Create Redmine user
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE ROLE {{ redmine_data.user }} WITH LOGIN ENCRYPTED PASSWORD \\\'{{ redmine_data.password }}\\\' | psql template1 \" "
@@ -55,3 +58,23 @@
   tags:
   - db
   - pgsql
+  - pgsql-roles
+
+# zabbix user
+- name: Check if creating {{ zabbix_data.user }} user is necessary
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT rolname FROM pg_roles WHERE rolname = \\\'{{ zabbix_data.user }}\\\' | psql template1 | grep {{ zabbix_data.user }}\" "
+  register: zabbix_user_present
+  ignore_errors: true
+  tags:
+  - db
+  - pgsql
+  - pgsql-roles
+
+- name: Create zabbix user
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE ROLE {{ zabbix_data.user }} WITH LOGIN ENCRYPTED PASSWORD \\\'{{ zabbix_data.password }}\\\' | psql template1 \" "
+  when:
+  - zabbix_user_present | failed
+  tags:
+  - db
+  - pgsql
+  - pgsql-roles
