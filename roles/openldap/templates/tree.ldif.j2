@@ -34,7 +34,7 @@ uidnumber: 1000
 userpassword: {{ ldap_user_hash.stdout }}
 
 
-# Entry 5: cn=Zabbix admin,ou=people,dc=02,dc=perceivon,dc=net
+# Entry 5: cn=Zabbix admin,ou=people,dc=<your_org>
 dn: cn=Zabbix admin,ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
 cn:  Zabbix admin
 gidnumber: 500

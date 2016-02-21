@@ -24,7 +24,7 @@
 - name: Install privileged user
   user: name={{ user.handle }} shell={{ user.shell }} groups={{ user.groups }} append=yes
 - name: Deploy authorized key
-  authorized_key: user={{ user.handle }}  key='{{ user.ssh_pub_key }}' state=present exclusive=yes
+  authorized_key: user={{ user.handle }}  key='{{ user.ssh_pub_key }}' state=present exclusive=no
   tags:
   - comb-misc
   - pkg-server

@@ -9,7 +9,7 @@ default:
       authentication: nil
       address: {{ production_jails.opensmtpd.ip }}
       port: 25
-      domain: perceivon.net
+      domain: {{ external_domain }}
 
   attachments_storage_path: /usr/local/www/redmine/files/
   autologin_cookie_name:
