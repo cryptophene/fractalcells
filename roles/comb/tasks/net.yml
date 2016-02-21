@@ -25,7 +25,7 @@
   lineinfile:
     dest: '/etc/rc.conf'
     state: present
-    line: "cloned_interfaces=\"{{ internal_interface }} {{ openvpn_data.interface }}\""
+    line: "cloned_interfaces=\"{{ internal_interface }} {{ openvpn.interface }}\""
   register: cloned_interfaces
 
 - name: See if {{ internal_interface }} already exists
@@ -46,9 +46,15 @@
     line: 'ifconfig_{{ internal_interface }}="inet {{ internal_ip }} netmask 255.255.255.255"'
   register: internal_ip_output
 
+- name: See if {{ internal_interface }} needs restarting
+  shell: ifconfig {{ internal_interface }} | grep {{ internal_ip }}
+  register: internal_ip_on_loopback_interface
+  ignore_errors: yes
+
 # 10.1 netif calls routing which is broken for loopback devices
-- name: Add internal ip to jails network interface
+- name: Check if internal ip needs adding to jails network interface
   shell: service netif restart lo1 || true
+  when:  internal_ip_on_loopback_interface | failed
 
 - name: Add network forwarding sysctl.
-  sysctl: name=net.inet.ip.forwarding=1 state=present sysctl_set=yes
+  sysctl: name=net.inet.ip.forwarding value=1 state=present sysctl_set=yes

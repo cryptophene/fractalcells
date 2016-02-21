@@ -75,7 +75,7 @@ DBHost={{ production_jails.postgresql.ip }}
 # Default:
 # DBName=
 
-DBName={{ zabbix_data.name }}
+DBName={{ data.zabbix.dbname }}
 
 ### Option: DBSchema
 #	Schema name. Used for IBM DB2 and PostgreSQL.
@@ -91,7 +91,7 @@ DBName={{ zabbix_data.name }}
 # Default:
 # DBUser=
 
-DBUser={{ zabbix_data.user }}
+DBUser={{ data.zabbix.dbuser }}
 
 ### Option: DBPassword
 #	Database password. Ignored for SQLite.
@@ -99,7 +99,7 @@ DBUser={{ zabbix_data.user }}
 #
 # Mandatory: no
 # Default:
-DBPassword={{ zabbix_data.password }}
+DBPassword={{ data.zabbix.password }}
 
 ### Option: DBSocket
 #	Path to MySQL socket.

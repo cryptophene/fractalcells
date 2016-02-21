@@ -61,7 +61,7 @@
 
 # TODO: move to notify/handler thing once iocage module is there
 - name: start opensmtpd
-  iocage: state=exec tag={{ opensmtpd_jail.uuid }} cmd="/bin/sh -c \"service smtpd start\""
+  iocage: state=exec tag={{ opensmtpd_jail.uuid }} cmd="/bin/sh -c \"service smtpd restart\""
   tags:
   - smtp
   - mail

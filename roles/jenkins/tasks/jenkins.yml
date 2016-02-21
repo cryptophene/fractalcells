@@ -35,14 +35,23 @@
   lineinfile: dest={{ jenkins_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
   with_items:
   - { line: "jenkins_enable=\"YES\"" }
+  - { line: "jenkins_args=\"--webroot=/usr/local/jenkins/war --httpPort=8180 --prefix=/\"" }
   tags:
   - jenkins
   - ci
 
 - name: Install jenkins pkgs
   when:
-  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
+  - jenkins_jail | success
   iocage: state=exec tag={{ production_jails.jenkins.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.jenkins.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.jenkins.tag }}"
+  tags:
+  - jenkins
+  - ci
+
+- name: Restart Jenkins
+  iocage: state=exec tag={{ jenkins_jail.uuid }} cmd="/bin/sh -c \"service jenkins restart\""
+  when:
+  - jenkins_jail | success
   tags:
   - jenkins
   - ci
@@ -57,23 +66,23 @@
   with_items:
   - { path: '{{ jenkins_jail_dir.stat.path }}/usr/local/jenkins/', mode: '755', owner: 818, group: 818 }
 
-- name: Start Jenkins
-  iocage: state=exec tag={{ jenkins_jail.uuid }} cmd="/bin/sh -c \"service jenkins restart\""
-  when:
-  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
-  tags:
-  - jenkins
-  - ci
-
 - name: Preload Jenkins
-  shell: sleep 60 && fetch -o - http://{{ production_jails.jenkins.ip }}:8180/jenkins/
+  shell: sleep 60 && fetch -o - http://{{ production_jails.jenkins.ip }}:8180/ >/dev/null
   ignore_errors: yes
   tags:
   - jenkins
   - ci
 
+- name: Find LDAP keyed password cookie
+  stat: path={{ jenkins_jail_dir.stat.path }}/usr/local/jenkins/.pw.salted
+  register: jenkins_pw_salted_cookie
+  tags:
+  - jenkins
+  - ci
+
 - name: Obtain LDAP keyed password
-  shell:  curl -d 'script=import hudson.util.Secret;def secret = Secret.fromString("{{ openldap_data.password }}");println(secret.getEncryptedValue())' http://{{ production_jails.jenkins.ip }}:8180/jenkins/scriptText/
+  shell:  curl -d 'script=import hudson.util.Secret;def secret = Secret.fromString("{{ config.openldap.manager_password }}");println(secret.getEncryptedValue())' http://{{ production_jails.jenkins.ip }}:8180/scriptText/
+  when: not jenkins_pw_salted_cookie.stat.exists
   register: jenkins_ldap_hash
   tags:
   - jenkins
@@ -85,18 +94,7 @@
   - { name: "config.xml", path: "/usr/local/jenkins", mode: 644 }
   - { name: "jenkins.model.JenkinsLocationConfiguration.xml", path: "/usr/local/jenkins", mode: 644 }
   - { name: "hudson.tasks.Mailer.xml", path: "/usr/local/jenkins", mode: 644 }
-  when:
-  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
-  tags:
-  - jenkins
-  - jenkins-debug
-  - ci
-
-- name: Restart Jenkins
-  iocage: state=exec tag={{ jenkins_jail.uuid }} cmd="/bin/sh -c \"service jenkins restart\""
-  when:
-  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
+  when: not jenkins_pw_salted_cookie.stat.exists
   tags:
   - jenkins
   - ci
-

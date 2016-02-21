@@ -23,3 +23,5 @@
 ---
 - include: iocage.yml
 - include: jenkins.yml
+- include: cli.yml
+- include: plugins.yml

@@ -23,6 +23,7 @@
 ---
 - hosts: perceivon
   sudo: true
+  #strategy: free
   #accelerate: true
   roles:
     - comb
@@ -34,6 +35,6 @@
     - nginx_proxy
     - nginx_internal
     - redmine
-    - openvpn
     - zabbix
     - jenkins
+    - openvpn

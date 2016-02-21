@@ -21,4 +21,34 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
- - include: pgsql.yml
+- name: Install NGINX
+  pkgng: name=nginx state=present
+  tags:
+  - pkg-server
+  - nginx_pkg
+
+- name: Create directories
+  file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
+  tags:
+  - nginx_pkg
+  - pkg-server
+  with_items:
+  - { path: '/usr/local/etc/nginx/conf.d', mode: '755', owner: root, group: wheel }
+  - { path: '/var/log/nginx', mode: '755', owner: www, group: www }
+
+- name: Deploy NGINX config files
+  template: src='{{ item.name }}.j2' dest='{{ item.path }}/{{ item.name }}' mode={{ item.mode}} owner={{ item.owner }} group={{ item.group }}
+  with_items:
+  - { name: "index.html", path: "/usr/local/www/nginx", mode: 644, owner: root, group: wheel  }
+  - { name: "nginx.conf", path: "/usr/local/etc/nginx", mode: 644, owner: root, group: wheel  }
+  - { name: "pkg-server.conf", path: "/usr/local/etc/nginx/conf.d", mode: 644, owner: root, group: wheel  }
+  register: nginx_internal_config_deployed
+  tags:
+  - nginx_pkg
+  - pkg-server
+
+- name: Start nginx
+  service: name=nginx state=started enabled=yes
+  tags:
+  - nginx_pkg
+  - pkg-server

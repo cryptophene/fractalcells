@@ -47,6 +47,7 @@
   tags:
   - iocage-jenkins
   - iocage-jails
+  - jenkins-debug
   - jenkins
   - automation
 
@@ -56,6 +57,7 @@
   tags:
   - iocage-jenkins
   - iocage-jails
+  - jenkins-debug
   - jenkins
   - automation
 

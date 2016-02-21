@@ -22,45 +22,45 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - name: Modify poudriere.conf
-  lineinfile: dest=/usr/local/etc/poudriere.conf line='{{ item.line }}' regexp='{{ item.regexp}}'
+  lineinfile: dest=/usr/local/etc/poudriere.conf line='{{ item.line }}' regexp='{{ item.regexp }}'
   with_items:
   - { line: "USE_TMPFS=all", regexp: "^USE_TMPFS=" }
   - { line: "ZPOOL=zroot", regexp: "^#ZPOOL=" }
-  - { line: "FREEBSD_HOST=file:///iocage/download/{{ iocage_release_version }}", regexp: "^FREEBSD_HOST=" }
+#  - { line: "FREEBSD_HOST=file:///iocage/download/{{ iocage_release_version }}", regexp: "^FREEBSD_HOST=" }
   tags:
-  - comb-poudriere
+  - pkg-server
 
 - name: See if poudriere buildjail needs to be created.
   shell: poudriere jail -l -q |grep build
   register: poudriere_buildjail_present
   ignore_errors: true
   tags:
-  - comb-poudriere
+  - pkg-server
 
 - name: Create poudriere build jail
   shell: poudriere jail -c -j build -m tar=/iocage/download/{{ iocage_release_version }}/base.txz -v {{iocage_release_version }}
   when: poudriere_buildjail_present|failed
   tags:
-  - comb-poudriere
+  - pkg-server
 
 - name: Link portstree Pt. I
   file: dest=/usr/local/etc/poudriere.d/ports/ports/ state=directory mode=0755
   tags:
-  - comb-poudriere
+  - pkg-server
 
 - name: Link portstree Pt. II
   lineinfile: dest=/usr/local/etc/poudriere.d/ports/ports/mnt line=/usr/ports create=yes
   tags:
-  - comb-poudriere
+  - pkg-server
 - name: Append some settings to poudriere make.conf
-  lineinfile: dest=/usr/local/etc/poudriere.d/build-make.conf line={{ item.line }} regexp={{ item.regexp }}create=yes
+  lineinfile: dest=/usr/local/etc/poudriere.d/build-make.conf line={{ item.line }} regexp={{ item.regexp }} create=yes
   with_items:
   - { line: "DEFAULT_VERSIONS=pgsql=9.4", regexp: "^DEFAULT_VERSIONS=" }
   - { line: "OPTIONS_UNSET=DOCS EXAMPLES MYSQL MYSQL2 MYSQLI APACHE APACHE22 APACHE24 THIN X11 APNG PNGTEST GNUTLS", regexp: "^OPTIONS_UNSET=" }
   - { line: "OPTIONS_SET=PGSQL POSTGRESQL PASSENGER NGINX PNG LDAP LDAPS OPENSSL", regexp: "^OPTIONS_SET="  }
   tags:
-  - comb-poudriere
+  - pkg-server
 - name: Build packages for Redmine and Zabbix
-  shell:  poudriere bulk -j build -p ports www/redmine www/nginx net-mgmt/zabbix24-server net-mgmt/zabbix24-agent net-mgmt/zabbix24-frontend
+  shell:  poudriere bulk -j build -p ports www/redmine www/nginx net-mgmt/zabbix24-server net-mgmt/zabbix24-agent net-mgmt/zabbix24-frontend devel/git
   tags:
-  - comb-poudriere
+  - pkg-server

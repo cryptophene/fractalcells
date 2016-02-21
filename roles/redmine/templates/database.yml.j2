@@ -1,9 +1,9 @@
 production:
   adapter: postgresql
-  database: {{ redmine_data.name }}
+  database: {{ data.redmine.dbname }}
   host: {{ production_jails.postgresql.ip }}
-  username: {{ redmine_data.user }}
-  password: {{ redmine_data.password }}
+  username: {{ data.redmine.dbuser }}
+  password: {{ data.redmine.password }}
   #encoding: utf8
 
 

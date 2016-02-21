@@ -1,7 +1,7 @@
 # Entry 1: base dc.
 dn: dc={{ external_domain.split('.') | join(',dc=') }}
 dc: {{ external_domain.split('.') | first }}
-description: {{ openldap_data.server_name }}
+description: {{ config.openldap.server_name }}
 o: {{ certificate_authority.organization }}
 objectclass: dcObject
 objectclass: organization
@@ -20,18 +20,18 @@ objectclass: organizationalUnit
 ou: people
 
 # Entry 4: cn=<your user>,ou=people,dc=<your org>
-dn: cn={{ user_name}},ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
-cn: {{ user_name }}
+dn: cn={{ user.name}},ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
+cn: {{ user.name }}
 gidnumber: 500
-givenname: {{ user_name.split(' ')[0]  }}
-homedirectory: /home/{{ user_name }}
+givenname: {{ user.name.split(' ')[0]  }}
+homedirectory: /home/{{ user.handle }}
 objectclass: inetOrgPerson
 objectclass: posixAccount
 objectclass: top
-sn: {{ user_name.split(' ')[-1]  }}
-uid: {{ user_handle }}
+sn: {{ user.name.split(' ')[-1]  }}
+uid: {{ user.handle }}
 uidnumber: 1000
-userpassword: {{ user_password }}
+userpassword: {{ ldap_user_hash.stdout }}
 
 
 # Entry 5: cn=Zabbix admin,ou=people,dc=02,dc=perceivon,dc=net
@@ -46,4 +46,4 @@ objectclass: top
 sn: Zabbix admin
 uid: Admin
 uidnumber: 1001
-userpassword: {{ zabbix_data.ldap_password }}
+userpassword: {{ ldap_zabbix_hash.stdout }}

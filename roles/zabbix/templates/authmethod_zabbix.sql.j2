@@ -1,7 +1,20 @@
 
 --
--- Data for Name: config; Type: TABLE DATA; Schema: public; Owner: {{ zabbix_data.user }}
+-- Data for Name: config; Type: TABLE DATA; Schema: public; Owner: {{ data.zabbix.dbuser }}
 --
 
-INSERT INTO config VALUES (1, 600, '1-5,09:00-18:00;', 7, 1, 7, 100, 'originalblue', 1, '{{ production_jails.openldap.ip }}', 389, 'dc={{ external_domain.split('.') | join(',dc=') }}', 'cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}', '{{ openldap_data.password }}', 'uid', 1, 1, 5, 50, 1000, 'DBDBDB', 'D6F6FF', 'FFF6A5', 'FFB689', 'FF9999', 'FF3838', 'Not classified', 'Information', 'Warning', 'Average', 'High', 'Disaster', 1800, 1800, 'DC0000', 'DC0000', '00AA00', '00AA00', 1, 1, 1, 1, 1, 10, 1, 365, 365, 365, 365, 1, 365, 1, 365, 1, 365, 1, 0, 90, 1, 0, 365);
+DELETE FROM config where configid = '1';
 
+INSERT INTO config VALUES (1, 600, '1-5,09:00-18:00;', 7, 1, 7, 100, 'originalblue', 1, '{{ production_jails.openldap.ip }}', 389, 'dc={{ external_domain.split('.') | join(',dc=') }}', 'cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}', '{{ config.openldap.manager_password }}', 'uid', 1, 1, 5, 50, 1000, 'DBDBDB', 'D6F6FF', 'FFF6A5', 'FFB689', 'FF9999', 'FF3838', 'Not classified', 'Information', 'Warning', 'Average', 'High', 'Disaster', 1800, 1800, 'DC0000', 'DC0000', '00AA00', '00AA00', 1, 1, 1, 1, 1, 10, 1, 365, 365, 365, 365, 1, 365, 1, 365, 1, 365, 1, 0, 90, 1, 0, 365);
+
+
+---
+--- FreeBSD Host autodiscovery
+---
+
+INSERT INTO actions VALUES (7, 'FreeBSD host autoregistration', 2, 0, 0, 0, 'Auto registration: {HOST.HOST}', 'Host name: {HOST.HOST}
+Host IP: {HOST.IP}
+Agent port: {HOST.PORT}', 0, '', '', '');
+
+INSERT INTO conditions VALUES (10, 7, 24, 2, 'FreeBSD');
+INSERT INTO operations VALUES (7, 7, 2, 0, 1, 1, 0);

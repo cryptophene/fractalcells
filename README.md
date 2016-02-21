@@ -70,3 +70,18 @@ If not: we do offer paid support.
 (Work in Progress)
 
 1. [GitLab](https://www.gitlab.org)
+
+## fractalcells pkg server
+
+The following is used to spin up and update the `fractalcells` package server visible at `http://pkg.fractalcells.com`:
+
+```
+ansible-playbook -i hosts.pkg pkg.yml -t pkg-server
+```
+
+Particular `make.conf` settings (see `roles/poudriere/tasks/poudriere.yml`):
+```
+DEFAULT_VERSIONS=pgsql=9.4
+OPTIONS_UNSET=DOCS EXAMPLES MYSQL MYSQL2 MYSQLI APACHE APACHE22 APACHE24 THIN X11 APNG PNGTEST GNUTLS
+OPTIONS_SET=PGSQL POSTGRESQL PASSENGER NGINX PNG LDAP LDAPS OPENSSL
+```

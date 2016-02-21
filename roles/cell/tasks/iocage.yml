@@ -36,13 +36,8 @@
   - iocage-cell
   register: template_jail
 
-- name: debug template_jail
-  debug: var=template_jail
-  tags:
-   - pf
-
 - name: Create template jail
-  iocage: state=cloned clone_from='basejail_{{ iocage_release_version }}' tag='template_{{ iocage_release_version }}' properties="pkglist={{ iocage_jails_dir }}/pkglist.txt ip4_addr='{{ testing_jails.template.interface }}|{{ testing_jails.template.ip }}' resolver='nameserver {{ internal_ip }}'"
+  iocage: state=cloned clone_from='basejail_{{ iocage_release_version }}' tag='template_{{ iocage_release_version }}' properties="pkglist={{ iocage_jails_dir }}/pkglist.txt ip4_addr='{{ testing_jails.template.interface }}|{{ testing_jails.template.ip }}' allow_sysvipc=1 resolver='nameserver {{ internal_ip }}'"
   tags:
   - iocage-cell
   - iocage-template
@@ -104,12 +99,46 @@
   - iocage-cell
   - iocage-template
 
+- name: Register jail's root diretory
+  stat: path='/iocage/jails/{{ template_jail.uuid }}/root/'
+  register: template_jail_dir
+  tags:
+  - iocage-cell
+  - iocage-template
+
+- assert:
+    that:
+      - template_jail_dir is defined
+      - template_jail_dir.stat.exists
+      - template_jail_dir.stat.isdir
+  tags:
+  - iocage-cell
+  - iocage-template
+
+- name: Deploy config files for template
+  when:
+  - template_jail|success
+  template: src='{{ item.name }}.j2' dest='{{ template_jail_dir.stat.path }}{{ item.path }}/{{ item.name }}' mode={{ item.mode}} owner=root group=257
+  with_items:
+  - { name: "zabbix_agentd.conf", path: "/usr/local/etc/zabbix24", mode: 644 }
+  tags:
+  - iocage-cell
+  - iocage-template
+
+- name: Enable zabbix_agentd service
+  lineinfile: dest={{ template_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="zabbix_agentd_enable=\"YES\""
+  when:
+  - template_jail|success
+  tags:
+  - iocage-cell
+  - iocage-template
+
 - name: Stop template jail
   tags:
   - iocage-cell
   - iocage-template
   iocage: state=stopped tag={{ template_jail.uuid }}
-  when: "template_jail|success"
+  when: template_jail|success
   register: template_jail
 
 

@@ -1,8 +1,0 @@
-
-smtpd:
-  user:         'XYZ' 			  # smtp relay user
-  password:     'password'   	  # smtp relay password
-  email:        'no-reply@domain.tld'  # smtp relay address
-  relay:
-    hostname:   'mx.domain.tld'
-    port:       587

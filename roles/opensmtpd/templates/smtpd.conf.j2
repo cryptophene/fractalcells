@@ -11,5 +11,5 @@ table authinfo file:/usr/local/etc/mail/authinfo.db
 accept for local alias <aliases> deliver to mbox
 accept from any for domain "{{ production_jails.opensmtpd.hostname }}.{{ external_domain }}" alias <aliases> deliver to mbox
 
-accept sender "@fractalcells.com" for any relay via "tls+auth://{{ external_domain }}@{{ smtpd.relay.hostname }}:{{ smtpd.relay.port }}" auth <authinfo> as "{{ smtpd.email }}"
+accept sender "@fractalcells.com" for any relay via "tls+auth://relay@{{ config.smtpd.relay.hostname }}:{{ config.smtpd.relay.port }}" auth <authinfo> as "{{ config.smtpd.email }}"
 

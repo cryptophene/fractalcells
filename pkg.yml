@@ -21,5 +21,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
-
-# TODO: Add 'start opensmtpd' bits from task here, once the ansible module is written
+- hosts: perceivon
+  sudo: true
+  #strategy: free
+  #accelerate: true
+  roles:
+    - comb
+    - poudriere
+    - nginx_pkg

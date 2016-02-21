@@ -1,0 +1,33 @@
+    server {
+        listen       80;
+        server_name pkg.fractalcells.com;
+
+        set $basepath "/usr/local/www";
+        root  "${basepath}/nginx";
+        index index.html;
+
+        location /packages {
+                alias /usr/local/poudriere/data/packages/build-ports;
+		autoindex on;
+        }
+
+        location /logs {
+                alias /usr/local/poudriere/data/logs/bulk/build-ports/;
+		autoindex on;
+        }
+
+        location /nginx_status {
+                # Turn on nginx stats
+                stub_status on;
+                # I do not need logs for stats
+                access_log   off;
+                # Security: Only allow access from 192.168.1.100 IP #
+                #allow 192.168.1.100;
+                # Send rest of the world to /dev/null #
+                #deny all;
+        }
+
+        location ~ /\.ht {
+            deny  all;
+        }
+}

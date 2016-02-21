@@ -47,12 +47,14 @@
   register: release_dir
   tags:
   - iocage-comb
+  - pkg-server
 
 - name: Fetch FreeBSD release {{ iocage_release_version }}
   shell: echo "{{ iocage_release_version }}" | /usr/local/sbin/iocage fetch ftpfiles="base.txz src.txz"
   when: release_dir.stat.isdir is undefined
   tags:
   - iocage-comb
+  - pkg-server
 
 - name: Check if it is now present
   stat: path='{{ iocage_releases_dir }}/{{ iocage_release_version }}'
@@ -87,9 +89,7 @@
 - name: Create pkglist file
   tags:
   - iocage-comb
-  copy:
-    src: pkglist.txt
-    dest: '{{ iocage_jails_dir }}/pkglist.txt'
+  copy: src=pkglist.txt dest='{{ iocage_jails_dir }}/pkglist.txt'
 
 - name: Enable iocage service
   tags:

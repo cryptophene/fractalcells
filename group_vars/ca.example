@@ -1,19 +1,16 @@
 ---
-certificate_directory:                          /usr/local/share/certs/ca
-  short_name:               'foobar'
-  root_ca_output_password:          'supersecr1t
-  root_ca_default_bits:             4096
-  intermediate_ca_output_password:          'secr1t'
-  intermediate_ca_default_bits:             4096
-  country:                  'US'
-  state:                    'CA'
-  locality:                 'Palo Alto'
-  organization:             'your company'
-  organizational_unit:      'your company Certificate Authority'
-  common_name:              'you'
-  email_address:            'ca@domain.tld'
-  challenge_password:       'secr1t'
-
-
-openssl:
-  ciphers:  ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!3DES:!MD5:!PSK
+certificate_authority:
+  certificate_directory:                /usr/local/share/certs
+  short_name:                           'foobar'
+  root_ca_output_password:              'supersecr1t
+  root_ca_default_bits:                 4096
+  intermediate_ca_output_password:      'secr1t'
+  intermediate_ca_default_bits:         4096
+  country:                              'US'
+  state:                                'CA'
+  locality:                             'Palo Alto'
+  organization:                         'your company'
+  organizational_unit:                  'your company Certificate Authority'
+  common_name:                          '*.domain.tld'
+  email_address:                        'ca@domain.tld'
+  challenge_password:                   'secr1t'

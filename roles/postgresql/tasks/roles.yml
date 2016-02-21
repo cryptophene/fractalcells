@@ -22,8 +22,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 # generic postgres user
-- name: Check if creating {{ postgresql_data.user }} user is necessary
-  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT rolname FROM pg_roles WHERE rolname = \\\'{{ postgresql_data.user }}\\\' | psql template1 | grep {{ postgresql_data.user }}\" "
+- name: Check if creating {{ data.postgresql.dbuser }} user is necessary
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT rolname FROM pg_roles WHERE rolname = \\\'{{ data.postgresql.dbuser }}\\\' | psql template1 | grep {{ data.postgresql.dbuser }}\" "
 
   register: postgresql_user_present
   ignore_errors: true
@@ -33,7 +33,7 @@
   - pgsql-roles
 
 - name: Create PostgreSQL user
-  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE ROLE {{ postgresql_data.user }} WITH SUPERUSER LOGIN CREATEDB CREATEROLE ENCRYPTED PASSWORD \\\'{{ postgresql_data.password }}\\\' | psql template1 \" "
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE ROLE {{ data.postgresql.dbuser }} WITH SUPERUSER LOGIN CREATEDB CREATEROLE ENCRYPTED PASSWORD \\\'{{ data.postgresql.password }}\\\' | psql template1 \" "
   when:
   - postgresql_user_present | failed
   tags:
@@ -42,8 +42,8 @@
   - pgsql-roles
 
 # redmine user
-- name: Check if creating {{ redmine_data.user }} user is necessary
-  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT rolname FROM pg_roles WHERE rolname = \\\'{{ redmine_data.user }}\\\' | psql template1 | grep {{ redmine_data.user }}\" "
+- name: Check if creating {{ data.redmine.dbuser }} user is necessary
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT rolname FROM pg_roles WHERE rolname = \\\'{{ data.redmine.dbuser }}\\\' | psql template1 | grep {{ data.redmine.dbuser }}\" "
   register: redmine_user_present
   ignore_errors: true
   tags:
@@ -52,7 +52,7 @@
   - pgsql-roles
 
 - name: Create Redmine user
-  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE ROLE {{ redmine_data.user }} WITH LOGIN ENCRYPTED PASSWORD \\\'{{ redmine_data.password }}\\\' | psql template1 \" "
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE ROLE {{ data.redmine.dbuser }} WITH LOGIN ENCRYPTED PASSWORD \\\'{{ data.redmine.password }}\\\' | psql template1 \" "
   when:
   - redmine_user_present | failed
   tags:
@@ -61,8 +61,8 @@
   - pgsql-roles
 
 # zabbix user
-- name: Check if creating {{ zabbix_data.user }} user is necessary
-  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT rolname FROM pg_roles WHERE rolname = \\\'{{ zabbix_data.user }}\\\' | psql template1 | grep {{ zabbix_data.user }}\" "
+- name: Check if creating {{ data.zabbix.dbuser }} user is necessary
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT rolname FROM pg_roles WHERE rolname = \\\'{{ data.zabbix.dbuser }}\\\' | psql template1 | grep {{ data.zabbix.dbuser }}\" "
   register: zabbix_user_present
   ignore_errors: true
   tags:
@@ -71,7 +71,7 @@
   - pgsql-roles
 
 - name: Create zabbix user
-  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE ROLE {{ zabbix_data.user }} WITH LOGIN ENCRYPTED PASSWORD \\\'{{ zabbix_data.password }}\\\' | psql template1 \" "
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE ROLE {{ data.zabbix.dbuser }} WITH LOGIN ENCRYPTED PASSWORD \\\'{{ data.zabbix.password }}\\\' | psql template1 \" "
   when:
   - zabbix_user_present | failed
   tags:

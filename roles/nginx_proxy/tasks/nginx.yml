@@ -48,7 +48,7 @@
   - { path: '{{ nginx_proxy_jail_dir.stat.path }}/var/log/nginx', mode: '755', owner: www, group: www }
 
 - name: Determine if {{ production_jails.nginx_proxy.tag }} jail needs certs
-  stat: path='{{ openldap_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.cert.pem'
+  stat: path='{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.cert.pem'
   register: nginx_proxy_cert
   tags:
   - nginx_proxy

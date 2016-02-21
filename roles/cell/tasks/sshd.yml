@@ -41,5 +41,5 @@
     dest: '{{ jail_home.stdout }}/home/vagrant/.ssh/authorized_keys'
     owner: vagrant
     owner: vagrant
-    content: '{{ ssh_pub_key }}'
+    content: '{{ user.ssh_pub_key }}'
 

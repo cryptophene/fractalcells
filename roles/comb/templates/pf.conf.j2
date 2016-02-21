@@ -1,10 +1,10 @@
-public_ip="{{ external_ip }}"
+public_ip="{{ ansible_default_ipv4.address }}"
 
-ext_if="{{ external_interface }}"
+ext_if="{{ ansible_default_ipv4.device }}"
 int_if="{{ internal_interface }}"
-vpn_if="{{ openvpn_data.interface }}"
+vpn_if="{{ openvpn.interface }}"
 
-vpnclients="{{ openvpn_data.subnet}}"
+vpnclients="{{ openvpn.subnet}}"
 icmptypes = "{echoreq, unreach}"
 
 table <jails> { {{ internal_netmask }} }
@@ -21,7 +21,7 @@ table <vpnclients> { $vpnclients }
 scrub in all
 
 nat pass log on $ext_if inet proto { tcp, udp, icmp } from <jails> to any -> $public_ip
-nat pass log on $vpn_if inet proto { tcp, udp, icmp } from <vpnclients> to any -> {{ openvpn_data.internal_ip }}
+nat pass log on $vpn_if inet proto { tcp, udp, icmp } from <vpnclients> to any -> {{ openvpn.internal_ip }}
 
 nat pass log on $ext_if inet from $vpnclients to any -> $public_ip
 

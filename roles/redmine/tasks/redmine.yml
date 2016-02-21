@@ -38,16 +38,6 @@
   - redmine
   - issues
 
-- name: Create package directory
-  file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
-  tags:
-  - redmine
-  - issues
-  when:
-  - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
-  with_items:
-  - { path: '{{ redmine_jail_dir.stat.path }}/packages', mode: '755', owner: root, group: wheel }
-
 - name: Remove freebsd.conf
   file: path={{ redmine_jail_dir.stat.path }}/etc/pkg/FreeBSD.conf state=absent
   tags:
@@ -57,15 +47,9 @@
 - name: Deploy Redmine repo config
   template: src='{{ item.name }}.j2' dest='{{ redmine_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
   with_items:
-  - { name: "local.conf", path: "/etc/pkg", mode: 644 }
+  - { name: "fractalcells.conf", path: "/etc/pkg", mode: 644 }
   when:
   - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
-  tags:
-  - redmine
-  - issues
-
-- name: Nullfs-mount package repo
-  mount: src=/usr/local/poudriere/data/packages/build-ports name={{ redmine_jail_dir.stat.path }}packages state=mounted opts=late,ro fstype=nullfs
   tags:
   - redmine
   - issues
@@ -168,7 +152,7 @@
   - issues
 
 - name: Load Redmine Authmethod SQL
-  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ redmine_data.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ redmine_data.user }} {{ redmine_data.name }} < /root/authmethod_redmine.sql \""
+  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ data.redmine.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ data.redmine.dbuser }} {{ data.redmine.dbname }} < /root/authmethod_redmine.sql \""
   tags:
   - redmine
   - issues

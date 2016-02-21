@@ -5,11 +5,9 @@ global $DB;
 $DB["TYPE"]		= 'POSTGRESQL';
 $DB["SERVER"]		= '{{ production_jails.postgresql.ip }}';
 $DB["PORT"]		= '0';
-$DB["DATABASE"]		= '{{ zabbix_data.name }}';
-$DB["USER"]		= '{{ zabbix_data.user }}';
-$DB["PASSWORD"]		= '{{ zabbix_data.password }}';
-// Schema name. Used for IBM DB2 and PostgreSQL.
-$DB["SCHEMA"]		= '';
+$DB["DATABASE"]		= '{{ data.zabbix.dbname }}';
+$DB["USER"]		= '{{ data.zabbix.dbuser }}';
+$DB["PASSWORD"]		= '{{ data.zabbix.password }}';
 
 $ZBX_SERVER		= '{{ production_jails.zabbix.ip }}';
 $ZBX_SERVER_PORT	= '10051';

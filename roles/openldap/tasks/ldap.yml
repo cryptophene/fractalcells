@@ -49,6 +49,27 @@
   - ldap-service
   - auth
 
+- name: Hash user password
+  iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"slappasswd -h '{SHA}' -s '{{ user.password }}' \""
+  register: ldap_user_hash
+  tags:
+  - ldap
+  - auth
+
+- name: Hash Zabbix Admin password
+  iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"slappasswd -h '{SHA}' -s '{{ config.zabbix.password }}' \""
+  register: ldap_zabbix_hash
+  tags:
+  - ldap
+  - auth
+
+- name: Hash Manager Admin password
+  iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"slappasswd -h '{SHA}' -s '{{ config.openldap.manager_password }}' \""
+  register: ldap_manager_hash
+  tags:
+  - ldap
+  - auth
+
 - name: Create directories
   file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
   tags:
@@ -123,7 +144,7 @@
   - auth
 
 - name: Does tree need to be imported?
-  iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \" ldapsearch -x -h localhost -p 389 -D cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}  -w '{{ openldap_data.password }}' -b dc={{ external_domain.split('.') | join(',dc=') }} uid={{ user_handle }} | grep numEntries\" "
+  iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \" ldapsearch -x -h localhost -p 389 -D cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}  -w '{{ config.openldap.manager_password }}' -b dc={{ external_domain.split('.') | join(',dc=') }} uid={{ user.handle }} | grep numEntries\" "
   register: ldap_user_present
   ignore_errors: true
   tags:

@@ -38,16 +38,6 @@
   - zabbix
   - monitoring
 
-- name: Create package directory
-  file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
-  tags:
-  - zabbix
-  - monitoring
-  when:
-  - "'uuid' in zabbix_jail and (zabbix_jail['uuid'] is defined and zabbix_jail['uuid'] != '-')"
-  with_items:
-  - { path: '{{ zabbix_jail_dir.stat.path }}/packages', mode: '755', owner: root, group: wheel }
-
 - name: Remove freebsd.conf
   file: path={{ zabbix_jail_dir.stat.path }}/etc/pkg/FreeBSD.conf state=absent
   tags:
@@ -57,15 +47,9 @@
 - name: Deploy Zabbix repo config
   template: src='{{ item.name }}.j2' dest='{{ zabbix_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
   with_items:
-  - { name: "local.conf", path: "/etc/pkg", mode: 644 }
+  - { name: "fractalcells.conf", path: "/etc/pkg", mode: 644 }
   when:
   - "'uuid' in zabbix_jail and (zabbix_jail['uuid'] is defined and zabbix_jail['uuid'] != '-')"
-  tags:
-  - zabbix
-  - monitoring
-
-- name: Nullfs-mount package repo
-  mount: src=/usr/local/poudriere/data/packages/build-ports name={{ zabbix_jail_dir.stat.path }}packages state=mounted opts=late,ro fstype=nullfs
   tags:
   - zabbix
   - monitoring
@@ -106,7 +90,7 @@
   - zabbix
   - monitoring
 - name: Load Zabbix DB schema SQL
-  iocage: state=exec tag={{ production_jails.zabbix.tag }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ zabbix_data.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ zabbix_data.user }} {{ zabbix_data.name }} < {{ item.path }} && touch /root/.db_prepared\" "
+  iocage: state=exec tag={{ production_jails.zabbix.tag }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ data.zabbix.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ data.zabbix.dbuser }} {{ data.zabbix.dbname }} < {{ item.path }} && touch /root/.db_prepared\" "
   with_items:
   - { path: "/usr/local/share/zabbix24/server/database/postgresql/schema.sql" }
   - { path: "/usr/local/share/zabbix24/server/database/postgresql/images.sql" }
@@ -126,13 +110,13 @@
   - monitoring
 
 - name: Load Zabbix Authmethod SQL
-  iocage: state=exec tag={{ production_jails.zabbix.tag }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ zabbix_data.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ zabbix_data.user }} {{ zabbix_data.name }} < /root/authmethod_zabbix.sql \""
+  iocage: state=exec tag={{ production_jails.zabbix.tag }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ data.zabbix.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ data.zabbix.dbuser }} {{ data.zabbix.dbname }} < /root/authmethod_zabbix.sql \""
   tags:
   - zabbix
   - monitoring
 
 - name: Remove Zabbix Authmethod SQL
-  file: path={{ redmine_jail_dir.stat.path }}/root/authmethod_zabbix.sql state=absent
+  file: path={{ zabbix_jail_dir.stat.path }}/root/authmethod_zabbix.sql state=absent
   tags:
-  - redmine
-  - issues
+  - zabbix
+  - monitoring

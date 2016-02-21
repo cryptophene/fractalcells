@@ -24,7 +24,7 @@ username-as-common-name
 
 # Clients receive an IP address
 # out of this pool
-server {{ openvpn_data.subnet.split('/')[0] }} 255.255.255.0
+server {{ openvpn.subnet.split('/')[0] }} 255.255.255.0
 
 # Save the client <-> ip address
 # mapping. Every client will get
@@ -37,7 +37,7 @@ ifconfig-noexec
 route-noexec
 
 # Push Routes to clients
-push "route {{ internal_netmask.split('/')[0] }} 255.255.255.0 {{ openvpn_data.internal_ip }}"
+push "route {{ internal_netmask.split('/')[0] }} 255.255.255.0 {{ openvpn.internal_ip }}"
 
 # Push our internal DNS to the clients
 push "dhcp-option DNS {{ internal_ip }}"

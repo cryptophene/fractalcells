@@ -23,7 +23,7 @@
 ---
 
 - name: Check if tun device needs creating
-  shell: ifconfig '{{ openvpn_data.interface }}'
+  shell: ifconfig '{{ openvpn.interface }}'
   register: openvpn_ifconfig
   ignore_errors: true
   tags:
@@ -31,7 +31,7 @@
   - vpn
 
 - name: Create tun device
-  shell: ifconfig '{{ openvpn_data.interface }}' create
+  shell: ifconfig '{{ openvpn.interface }}' create
   when: openvpn_ifconfig|failed
   tags:
   - openvpn
@@ -45,7 +45,7 @@
   register: openvpn_jail
 
 - name: Set VPN route
-  shell: route add -net '{{ openvpn_data.subnet }}' '{{ openvpn_data.internal_ip }}'
+  shell: route add -net '{{ openvpn.subnet }}' '{{ openvpn.internal_ip }}'
   tags:
   - openvpn
   - vpn

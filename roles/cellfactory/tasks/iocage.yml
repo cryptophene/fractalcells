@@ -1,0 +1,84 @@
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+- name: Check if {{ item.key }} jail already exists
+  iocage: state=exists tag='{{ item.value.tag }}'
+  register: "production_jail_uuids"
+  tags:
+  - iocage-jails
+  - cellfactory
+  #- "iocage-{{ item.key }}"
+  #- "{{ item.key }}"
+  with_dict: "{{ production_jails }}"
+
+- name: debug variable '{{ item.key }}_jail'
+  debug: var={{ item }}
+  tags:
+  - iocage-jails
+  - cellfactory
+  with_dict: "{{ production_jail_uuids.results }}"
+#- name: debug variables
+#  debug: var=vars
+#  tags:
+#  - iocage-jails
+#  - cellfactory
+
+- name: Create jail {{ production_jails.nginx_proxy.tag }}
+  iocage: state=cloned clone_from='{{ template_jail.uuid }}' tag={{ item.value.tag }} properties="ip4_addr='{{ item.value.interface }}|{{ item.value.ip }}' boot=on allow_sysvipc=0 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
+  when:
+  - "'uuid' in  item  and (item['uuid'] is not defined or item['uuid'] == '-')"
+  with_items: "{{ production_jail_uuids.results }}"
+  tags:
+  - iocage-jails
+  - cellfactory
+
+- name: Find UUID for {{ production_jails.nginx_proxy.tag  }}
+  iocage: state=exists tag='{{ production_jails.nginx_proxy.tag }}'
+  changed_when: false
+  register: nginx_proxy_jail
+  tags:
+  - iocage-jails
+  - iocage-nginx_proxy
+  - nginx_proxy
+  - nginx_proxy-debug
+  - proxy
+
+- name: Register jail's root diretory
+  stat: path='/iocage/jails/{{ nginx_proxy_jail.uuid }}/root/'
+  register: nginx_proxy_jail_dir
+  tags:
+  - iocage-jails
+  - iocage-nginx_proxy
+  - nginx_proxy
+  - nginx_proxy-debug
+  - proxy
+
+- assert:
+    that:
+      - nginx_proxy_jail_dir.stat.exists
+      - nginx_proxy_jail_dir.stat.isdir
+  tags:
+  - iocage-jails
+  - iocage-nginx_proxy
+  - nginx_proxy
+  - proxy

@@ -21,10 +21,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
-- name: restart pf
+- name: reload pf
   command: service pf reload
   tags: pf
 
-- name: restart ipfw
-  command: service ipfw reload
-  tags: ipfw
+- name: restart pf
+  command: service pf restart
+  tags: pf

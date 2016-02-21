@@ -17,12 +17,12 @@
 
 VersionAddendum perceivon
 
-Port {{ host_sshd_port }}
+Port {{ config.host.sshd_port }}
 #AddressFamily any
 #ListenAddress 0.0.0.0
 #ListenAddress ::
 ListenAddress {{ internal_ip }}
-ListenAddress {{ external_ip }}
+ListenAddress {{ ansible_default_ipv4.address }}
 
 # Ths  default requires explicit activation of protocol 1
 #Protocol 2

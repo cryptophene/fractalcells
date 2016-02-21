@@ -1,0 +1,13 @@
+data:
+  postgresql:
+    dbuser:       'postgres'
+    password:     '5VlIyve'
+  redmine:
+    dbname:       'redminedb'
+    dbuser:       'redmine_dbuser'
+    password:     'QbhiotM'
+  zabbix:
+    dbname:       'zabbix'
+    dbuser:       'zabbix'
+    password:     'iVPnz2K'
+

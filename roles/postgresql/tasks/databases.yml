@@ -25,8 +25,8 @@
 # Figure out how with_dict could be used to store/register variables.
 
 # redmine
-- name: Check if creating {{ redmine_data.name }} database is necessary
-  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT datname FROM pg_database WHERE datname = \\\'{{ redmine_data.name }}\\\' | psql template1 | grep {{ redmine_data.name }}\" "
+- name: Check if creating {{ data.redmine.dbname }} database is necessary
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT datname FROM pg_database WHERE datname = \\\'{{ data.redmine.dbname }}\\\' | psql template1 | grep {{ data.redmine.dbname }}\" "
   register: redmine_db_present
   ignore_errors: true
   tags:
@@ -34,9 +34,8 @@
   - pgsql
   - pgsql-dbs
 
-- name: Create {{ redmine_data.name }} database
-  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE DATABASE {{ redmine_data.name }} WITH OWNER = {{ redmine_data.user }} | psql template1 \" "
-  #iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE DATABASE {{ redmine_data.name }} WITH OWNER = \\\'{{ postgresql_data.password }}\\\' | psql template1 \" "
+- name: Create {{ data.redmine.dbname }} database
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE DATABASE {{ data.redmine.dbname }} WITH OWNER = {{ data.redmine.dbuser }} | psql template1 \" "
   when:
   - redmine_db_present | failed
   tags:
@@ -45,8 +44,8 @@
   - pgsql-dbs
 
 # zabbix
-- name: Check if creating {{ zabbix_data.name }} database is necessary
-  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT datname FROM pg_database WHERE datname = \\\'{{ zabbix_data.name }}\\\' | psql template1 | grep {{ zabbix_data.name }}\" "
+- name: Check if creating {{ data.zabbix.dbname }} database is necessary
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT datname FROM pg_database WHERE datname = \\\'{{ data.zabbix.dbname }}\\\' | psql template1 | grep {{ data.zabbix.dbname }}\" "
   register: zabbix_db_present
   ignore_errors: true
   tags:
@@ -54,9 +53,8 @@
   - pgsql
   - pgsql-dbs
 
-- name: Create {{ zabbix_data.name }} database
-  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE DATABASE {{ zabbix_data.name }} WITH OWNER = {{ zabbix_data.user }} | psql template1 \" "
-  #iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE DATABASE {{ zabbix_data.name }} WITH OWNER = \\\'{{ postgresql_data.password }}\\\' | psql template1 \" "
+- name: Create {{ data.zabbix.dbname }} database
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE DATABASE {{ data.zabbix.dbname }} WITH OWNER = {{ data.zabbix.dbuser }} | psql template1 \" "
   when:
   - zabbix_db_present | failed
   tags:

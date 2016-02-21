@@ -1,0 +1,18 @@
+external_domain:          'fc.acme.com'
+
+config:
+  host:
+    sshd_port:           '22'
+  openldap:
+    server_name:         'Acme Corporation Directory Server'
+    manager_password:    'pinky_is_awesome'
+  smtpd:
+    user:                 'pinky'
+    password:             'so_aweosme'
+    email:                'chris@acme.com'
+    relay:
+      hostname:           'smtp-c.acme.com'
+      port:               587
+  zabbix:
+    password:             '1234'
+

@@ -1,6 +1,0 @@
----
-iocage_dir: '/iocage'
-iocage_releases_dir: '{{ iocage_dir }}/download'
-iocage_jails_dir: '{{ iocage_dir }}/jails'
-iocage_zpool: 'tank'
-iocage_release_version: '10.2-RELEASE'

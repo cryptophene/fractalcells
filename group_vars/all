@@ -1,0 +1,155 @@
+ansible_python_interpreter: '/usr/local/bin/python'
+
+iocage_dir:                     '/iocage'
+iocage_releases_dir:            '{{ iocage_dir }}/download'
+iocage_jails_dir:               '{{ iocage_dir }}/jails'
+iocage_zpool:                   'zroot'
+iocage_release_version:         '10.2-RELEASE'
+
+openssl:
+  ciphers:  ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!3DES:!MD5:!PSK
+
+internal_ip:              '10.1.0.1'
+internal_interface:       'lo1'
+internal_netmask:         '10.1.0.0/24'
+
+openvpn:
+  interface:    'tun0'
+  subnet:       '10.2.0.0/24'
+  internal_ip:  '10.2.0.5'
+  ifconfig:     '10.2.0.5 10.2.0.1 mtu 1500 netmask 255.255.255.255'
+
+testing_jails:
+  template:
+    hostname:  'template'
+    interface:      'lo1'
+    ip:             '10.1.0.4'
+    tag:            'template_'
+    pkgs:
+    - ca_root_nss
+    - python27
+    - sudo
+    - tmux
+    - vim-lite
+    - zsh
+    - zabbix24-agent
+
+jenkins:
+  plugins:
+  - 'ldap'
+  - 'git'
+  - 'maven-plugin'
+  - 'ssh-slaves'
+  - 'matrix-auth'
+  - 'script-security'
+  - 'antisamy-markup-formatter'
+  - 'subversion'
+
+production_jails:
+  postgresql:
+    hostname:  'db'
+    interface: 'lo1'
+    ip:        '10.1.0.5'
+    tag:       'data'
+    pkgs:
+    - postgresql94-client
+    - postgresql94-server
+    - postgresql94-contrib
+    pf:
+      ports:   '5432'
+      proto:   'tcp, udp'
+  openldap:
+    hostname:  'auth'
+    interface: 'lo1'
+    ip:        '10.1.0.6'
+    tag:       'auth'
+    pkgs:
+    - openldap-server
+    - openldap-client
+    - ca_root_nss
+    - pam_ldap
+    - nss_ldap
+    pf:
+      ports:   '389, 636'
+      proto:   'tcp'
+  opensmtpd:
+    hostname:  'mx'
+    interface: 'lo1'
+    ip:        '10.1.0.7'
+    tag:       'mx'
+    pkgs:
+    - opensmtpd
+    - ca_root_nss
+    pf:
+      ports:   '587'
+      proto:   'tcp'
+  nginx_proxy:
+    hostname:  '05'
+    interface: 'lo1'
+    ip:        '10.1.0.8'
+    tag:       'nginx_proxy'
+    pkgs:
+    - ca_root_nss
+    - nginx
+    - php56
+    - phpldapadmin
+    - phppgadmin
+    pf:
+      ports:   '80,443'
+      proto:   'tcp'
+  nginx_internal:
+    hostname:  'internal'
+    interface: 'lo1'
+    ip:        '10.1.0.9'
+    tag:       'nginx_internal'
+    pkgs:
+    - ca_root_nss
+    - nginx
+    - php56
+    - phpldapadmin
+    - phppgadmin
+    - zabbix24-frontend
+    nginx_proxied: 80
+  redmine:
+    hostname:  'issues'
+    interface: 'lo1'
+    ip:        '10.1.0.10'
+    tag:       'issues'
+    pkgs:
+    - nginx
+    - redmine
+    - git
+    nginx_proxied: 80
+  openvpn:
+    hostname:  'vpn'
+    interface: 'lo1'
+    ip:        '10.1.0.11'
+    tag:       'vpn'
+    pkgs:
+    - openvpn
+    - openvpn-auth-ldap
+    pf:
+      ports:   '1194'
+      proto:   'tcp, udp'
+  zabbix:
+    hostname:  'monitoring'
+    interface: 'lo1'
+    ip:        '10.1.0.12'
+    tag:       'monitoring'
+    pkgs:
+    - zabbix24-server
+  jenkins:
+    hostname:  'ci'
+    interface: 'lo1'
+    ip:        '10.1.0.13'
+    tag:       'ci'
+    nginx_proxied: 8180
+    pkgs:
+    - git
+    - jenkins
+
+#  logging:
+#    hostname:  'log'
+#    interface: 'lo1'
+#    ip:        '10.1.0.12'
+#    tag:       'log'
