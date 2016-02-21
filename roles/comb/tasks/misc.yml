@@ -60,12 +60,11 @@
   - pkg-server
   when:
   - ports_svn_dir.stat.isdir is undefined
+
 - name: See if portstree needs to be updated
   shell: /bin/sh -c "[ \"`cd  /usr/ports && svnlite info | awk '/Last Changed Date/ {print $4}'`\" == `date \"+%Y-%m-%d\"` ]"
   register: ports_svn_uptodate
   ignore_errors: true
-  tags:
-  - comb-misc
   tags:
   - comb-misc
   - pkg-server
