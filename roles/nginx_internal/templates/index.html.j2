@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>fractalcells || pkg server</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<img src="http://fractalcells.com/logo.png" alt="fractalcells logo" style="width: 35em; margin: 0 auto">
+<h1>Welcome to fractalcells!</h1>
+<p>If you see this page, you're successfully running fractalcells.</p>
+
+<p>
+See the issue tracker at 
+<a href="http://{{ production_jails.redmine.hostname }}.{{ external_domain }}/">{{ production_jails.redmine.hostname }}.{{ external_domain }}</a>.<br/><br/>
+
+Find the monitoring console (Zabbix) at
+<a href="http://{{ production_jails.nginx_internal.hostname }}.{{ external_domain }}/zabbix/">{{ production_jails.nginx_internal.hostname }}.{{ external_domain }}/zabbix/</a>.<br/><br/>
+
+Find continuous integration (Jenkins) at
+<a href="http://{{ production_jails.jenkins.hostname }}.{{ external_domain }}/">{{ production_jails.jenkins.hostname }}.{{ external_domain }}/</a>.<br/><br/>
+
+Find the database console (phpPgAdmin) at
+<a href="http://{{ production_jails.nginx_internal.hostname }}.{{ external_domain }}/phpPgAdmin/">{{ production_jails.nginx_internal.hostname }}.{{ external_domain }}/phpPgAdmin/</a>.<br/><br/>
+
+Find the authentication console (phpLDAPAdmin) at
+<a href="http://{{ production_jails.nginx_internal.hostname }}.{{ external_domain }}/phpldapadmin/">{{ production_jails.nginx_internal.hostname }}.{{ external_domain }}/phpPgAdmin/</a>.<br/><br/>
+
+Commercial support is available at
+<a href="http://fractalcells.com/">fractalcells.com</a>.</p>
+
+<p><em>Thank you for using fractalcells.</em></p>
+</body>
+</html>

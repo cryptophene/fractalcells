@@ -33,7 +33,7 @@
   with_items:
   - { name: "fractalcells.conf", path: "/etc/pkg", mode: 644 }
   when:
-  - "'uuid' in nginx_internal_jail and (nginx_internal_jail['uuid'] is defined and nginx_internal_jail['uuid'] != '-')"
+  - nginx_internal_jail|success
   tags:
   - nginx_internal
   - proxy
@@ -69,6 +69,7 @@
   - { name: "config.php", path: "/usr/local/www/phpldapadmin/config", mode: 600, owner: www, group: www }
   - { name: "config.inc.php", path: "/usr/local/www/phpPgAdmin/conf", mode: 600, owner: www, group: www }
   - { name: "zabbix.conf.php", path: "/usr/local/www/zabbix24/conf", mode: 600, owner: www, group: www }
+  - { name: "index.html", path: "/usr/local/www/nginx-dist", mode: 644, owner: www, group: www }
   register: nginx_internal_config_deployed
   tags:
   - nginx_internal
