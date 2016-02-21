@@ -5,7 +5,39 @@
   <numExecutors>2</numExecutors>
   <mode>NORMAL</mode>
   <useSecurity>true</useSecurity>
-  <authorizationStrategy class="hudson.security.FullControlOnceLoggedInAuthorizationStrategy"/>
+  <authorizationStrategy class="hudson.security.GlobalMatrixAuthorizationStrategy">
+    <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Create:{{ user.handle }}</permission>
+    <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Delete:{{ user.handle }}</permission>
+    <permission>com.cloudbees.plugins.credentials.CredentialsProvider.ManageDomains:{{ user.handle }}</permission>
+    <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Update:{{ user.handle }}</permission>
+    <permission>com.cloudbees.plugins.credentials.CredentialsProvider.View:{{ user.handle }}</permission>
+    <permission>hudson.model.Computer.Build:{{ user.handle }}</permission>
+    <permission>hudson.model.Computer.Configure:{{ user.handle }}</permission>
+    <permission>hudson.model.Computer.Connect:{{ user.handle }}</permission>
+    <permission>hudson.model.Computer.Create:{{ user.handle }}</permission>
+    <permission>hudson.model.Computer.Delete:{{ user.handle }}</permission>
+    <permission>hudson.model.Computer.Disconnect:{{ user.handle }}</permission>
+    <permission>hudson.model.Hudson.Administer:{{ user.handle }}</permission>
+    <permission>hudson.model.Hudson.ConfigureUpdateCenter:{{ user.handle }}</permission>
+    <permission>hudson.model.Hudson.Read:{{ user.handle }}</permission>
+    <permission>hudson.model.Hudson.RunScripts:{{ user.handle }}</permission>
+    <permission>hudson.model.Hudson.UploadPlugins:{{ user.handle }}</permission>
+    <permission>hudson.model.Item.Build:{{ user.handle }}</permission>
+    <permission>hudson.model.Item.Cancel:{{ user.handle }}</permission>
+    <permission>hudson.model.Item.Configure:{{ user.handle }}</permission>
+    <permission>hudson.model.Item.Create:{{ user.handle }}</permission>
+    <permission>hudson.model.Item.Delete:{{ user.handle }}</permission>
+    <permission>hudson.model.Item.Discover:{{ user.handle }}</permission>
+    <permission>hudson.model.Item.Read:{{ user.handle }}</permission>
+    <permission>hudson.model.Item.Workspace:{{ user.handle }}</permission>
+    <permission>hudson.model.Run.Delete:{{ user.handle }}</permission>
+    <permission>hudson.model.Run.Update:{{ user.handle }}</permission>
+    <permission>hudson.model.View.Configure:{{ user.handle }}</permission>
+    <permission>hudson.model.View.Create:{{ user.handle }}</permission>
+    <permission>hudson.model.View.Delete:{{ user.handle }}</permission>
+    <permission>hudson.model.View.Read:{{ user.handle }}</permission>
+    <permission>hudson.scm.SCM.Tag:{{ user.handle }}</permission>
+  </authorizationStrategy>
   <securityRealm class="hudson.security.LDAPSecurityRealm" plugin="ldap@1.11">
     <server>ldap://{{ production_jails.openldap.ip }}</server>
     <rootDN>dc={{ external_domain.split('.') | join(',dc=') }}</rootDN>
