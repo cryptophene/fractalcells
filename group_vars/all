@@ -109,7 +109,6 @@ production_jails:
     - phpldapadmin
     - phppgadmin
     - zabbix24-frontend
-    nginx_proxied: 80
   redmine:
     hostname:  'issues'
     interface: 'lo1'
