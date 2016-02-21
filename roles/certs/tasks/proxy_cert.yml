@@ -37,7 +37,16 @@
   - { path: '{{ certificate_authority.certificate_directory }}/proxy/index.txt', mode: 755, state: touch }
   - { path: '{{ certificate_authority.certificate_directory }}/proxy/serial', mode: 755, state: touch }
 
+- name: Check if Proxy serial exists
+  stat: path={{ certificate_authority.certificate_directory }}/proxy/serial
+  register: proxy_serial
+  tags:
+  - proxy
+  - certs
+  - proxy-cert
+
 - shell: echo 1100 > '{{ certificate_authority.certificate_directory }}/proxy/serial'
+  when: not proxy_serial.stat.exists
   tags:
   - proxy
   - certs
@@ -50,6 +59,7 @@
   - proxy
   - certs
   - proxy-cert
+
 - name: Generate Proxy TLS key
   shell: openssl genrsa -out '{{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem' {{ certificate_authority.intermediate_ca_default_bits }}
   when: not proxy_tls_key.stat.exists
