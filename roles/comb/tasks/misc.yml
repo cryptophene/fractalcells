@@ -40,7 +40,7 @@
   - { name: zxfer  }
   - { name: iftop  }
   - { name: postgresql94-client  }
-  - { name: poudriere }
+  - { name: poudriere-devel }
   - { name: dialog4ports }
   - { name: curl }
   - { name: portupgrade  }
