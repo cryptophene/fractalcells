@@ -2,15 +2,27 @@
 certificate_authority:
   certificate_directory:                /usr/local/share/certs
   short_name:                           'foobar'
-  root_ca_output_password:              'supersecr1t
-  root_ca_default_bits:                 4096
-  intermediate_ca_output_password:      'secr1t'
-  intermediate_ca_default_bits:         4096
+  root:
+    output_password:                    'supersecr1t'
+    default_bits:                       4096
+    common_name:                        '<your company> Root Certificate Authority'
+    email_address:                      'ca@your.company.tld'
+    challenge_password:                 'hyperssecr1t'
+  intermediate:
+    output_password:                    'secr1t'
+    default_bits:                       4096
+    common_name:                        '<your company> Intermediate Certificate Authority'
+    email_address:                      'ca@your.company.tld'
+    challenge_password:                 'notlesssecr1t'
+  proxy:
+    common_name:                        '{{ external_domain }}'
+    organizational_unit:                '<your company>'
+    default_bits:                       4096
+    output_password:                    'still_secr1t'
+    email_address:                      'info@your.company.tld'
+    challenge_password:                 'moarsecr1t'
   country:                              'US'
   state:                                'CA'
   locality:                             'Palo Alto'
   organization:                         'your company'
   organizational_unit:                  'your company Certificate Authority'
-  common_name:                          '*.domain.tld'
-  email_address:                        'ca@domain.tld'
-  challenge_password:                   'secr1t'

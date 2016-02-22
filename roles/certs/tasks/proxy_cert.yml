@@ -61,7 +61,7 @@
   - proxy-cert
 
 - name: Generate Proxy TLS key
-  shell: openssl genrsa -out '{{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem' {{ certificate_authority.intermediate_ca_default_bits }}
+  shell: openssl genrsa -out '{{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem' {{ certificate_authority.intermediate.default_bits }}
   when: not proxy_tls_key.stat.exists
   tags:
   - proxy
@@ -77,7 +77,7 @@
   - proxy-cert
 
 - name: Generate Proxy TLS CSR
-  shell: openssl req -config '/root/intermediate_ca_req.cnf' -key '{{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem'  -new -sha256 -out '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem'
+  shell: openssl req -config '/root/server_cert_req.cnf' -key '{{ certificate_authority.certificate_directory }}/proxy/private/{{ certificate_authority.short_name }}_proxy.key.pem'  -new -sha256 -out '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem'
   when: not proxy_tls_csr.stat.exists
   tags:
   - proxy
@@ -93,7 +93,7 @@
   - proxy-cert
 
 - name: Sign Proxy TLS cert
-  shell: yes | openssl ca -config '/root/intermediate_ca_req.cnf' -extensions server_cert -days 375 -notext -md sha256 -in '/{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem' -out '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name}}_proxy.cert.pem' -passin 'pass:{{ certificate_authority.intermediate_ca_output_password }}'
+  shell: yes | openssl ca -config '/root/server_cert_req.cnf' -extensions server_cert -days 375 -notext -md sha256 -in '/{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem' -out '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name}}_proxy.cert.pem' -passin 'pass:{{ certificate_authority.intermediate.output_password }}'
   when: not proxy_tls_csr.stat.exists
   tags:
   - certs

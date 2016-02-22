@@ -134,6 +134,21 @@
   - openvpn
   - vpn
 
+- name: See if tls auth key present
+  stat: path='{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/ta.key'
+  register: openvpn_tls_auth_key
+  tags:
+  - openvpn
+  - vpn
+
+- name: Deploy tls auth key
+  iocage: state=exec tag={{ openvpn_jail.uuid }} cmd="openvpn --genkey --secret /usr/local/etc/openvpn/private/ta.key"
+  when:
+  - not openvpn_tls_auth_key.stat.exists
+  tags:
+  - openvpn
+  - vpn
+
 - name: Deploy OpenVPN configs
   template: src='{{ item.name }}.j2' dest='{{ openvpn_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
   with_items:

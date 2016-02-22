@@ -51,8 +51,8 @@ commonName              = supplied
 emailAddress            = optional
 
 [req]
-output_password 	=	{{ certificate_authority.root_ca_output_password }}
-default_bits		=	{{ certificate_authority.root_ca_default_bits }}
+output_password 	=	{{ certificate_authority.root.output_password }}
+default_bits		=	{{ certificate_authority.root.default_bits }}
 attributes		=	req_attributes
 prompt 			=	no
 distinguished_name 	=	req_distinguished_name
@@ -65,11 +65,11 @@ stateOrProvinceName	=	{{ certificate_authority.state }}
 localityName		=	{{ certificate_authority.locality }}
 0.organizationName	=	{{ certificate_authority.organization }}
 organizationalUnitName	=	{{ certificate_authority.organizational_unit }}
-commonName		=	{{ certificate_authority.common_name }}
-emailAddress		=	{{ certificate_authority.email_address }}
+commonName		=	{{ certificate_authority.root.common_name }}
+emailAddress		=	{{ certificate_authority.root.email_address }}
 
 [ req_attributes ]
-challengePassword	=	{{ certificate_authority.challenge_password }}
+challengePassword	=	{{ certificate_authority.root.challenge_password }}
 
 [ v3_ca ]
 # Root certs

@@ -29,6 +29,7 @@
   with_items:
   - { name: 'root_ca_req' }
   - { name: 'intermediate_ca_req' }
+  - { name: 'server_cert_req' }
 - name: Create cert paths
   file: path={{ item.path }} mode={{ item.mode }} state={{ item.state }}
   tags:
@@ -70,7 +71,7 @@
   tags:
   - certs
 - name: Generate Root CA Key
-  shell: openssl genrsa -aes256 -passout 'pass:{{ certificate_authority.root_ca_output_password }}' -out {{ certificate_authority.certificate_directory }}/ca/root/private/{{ certificate_authority.short_name }}_ca.key.pem 4096
+  shell: openssl genrsa -aes256 -passout 'pass:{{ certificate_authority.root.output_password }}' -out {{ certificate_authority.certificate_directory }}/ca/root/private/{{ certificate_authority.short_name }}_ca.key.pem 4096
   when: not root_ca_key.stat.exists
   tags:
   - certs
@@ -81,7 +82,7 @@
   - certs
 
 - name: Generate Root Certificate
-  shell: openssl req -config /root/root_ca_req.cnf -key {{ certificate_authority.certificate_directory }}/ca/root/private/{{ certificate_authority.short_name }}_ca.key.pem -passin 'pass:{{ certificate_authority.root_ca_output_password }}' -new -x509 -days 7300 -sha256 -extensions v3_ca
+  shell: openssl req -config /root/root_ca_req.cnf -key {{ certificate_authority.certificate_directory }}/ca/root/private/{{ certificate_authority.short_name }}_ca.key.pem -passin 'pass:{{ certificate_authority.root.output_password }}' -new -x509 -days 7300 -sha256 -extensions v3_ca
                           -out {{ certificate_authority.certificate_directory }}/ca/root/certs/{{ certificate_authority.short_name }}_ca.cert.pem
   when: not root_ca_cert.stat.exists
   tags:
@@ -107,7 +108,7 @@
   tags:
   - certs
 - name: Generate Intermediate key
-  shell: openssl genrsa -aes256 -passout 'pass:{{ certificate_authority.intermediate_ca_output_password }}' -out {{ certificate_authority.certificate_directory }}/ca/intermediate/private/{{ certificate_authority.short_name }}_ca.key.pem 4096
+  shell: openssl genrsa -aes256 -passout 'pass:{{ certificate_authority.intermediate.output_password }}' -out {{ certificate_authority.certificate_directory }}/ca/intermediate/private/{{ certificate_authority.short_name }}_ca.key.pem 4096
   when: not intermediate_ca_key.stat.exists
   tags:
   - certs
@@ -118,7 +119,7 @@
   - certs
 
 - name: Generate Intermediate Certificate
-  shell: openssl req -config /root/intermediate_ca_req.cnf -key {{ certificate_authority.certificate_directory }}/ca/intermediate/private/{{ certificate_authority.short_name }}_ca.key.pem -passin 'pass:{{ certificate_authority.intermediate_ca_output_password }}' -new -x509 -days 7300 -sha256 -extensions v3_ca
+  shell: openssl req -config /root/intermediate_ca_req.cnf -key {{ certificate_authority.certificate_directory }}/ca/intermediate/private/{{ certificate_authority.short_name }}_ca.key.pem -passin 'pass:{{ certificate_authority.intermediate.output_password }}' -new -x509 -days 7300 -sha256 -extensions v3_ca
                           -out {{ certificate_authority.certificate_directory }}/ca/intermediate/certs/{{ certificate_authority.short_name }}_ca.cert.pem
   when: not intermediate_ca_cert.stat.exists
   tags:

@@ -50,8 +50,8 @@ commonName		=	supplied
 emailAddress		=	optional
 
 [req]
-output_password 	=	{{ certificate_authority.intermediate_ca_output_password }}
-default_bits		=	{{ certificate_authority.intermediate_ca_default_bits }}
+output_password 	=	{{ certificate_authority.intermediate.output_password }}
+default_bits		=	{{ certificate_authority.intermediate.default_bits }}
 attributes		=	req_attributes
 prompt 			=	no
 distinguished_name 	=	req_distinguished_name
@@ -66,11 +66,11 @@ stateOrProvinceName	=	{{ certificate_authority.state }}
 localityName		=	{{ certificate_authority.locality }}
 0.organizationName	=	{{ certificate_authority.organization }}
 organizationalUnitName	=	{{ certificate_authority.organizational_unit }}
-commonName		=	{{ certificate_authority.common_name }}
-emailAddress		=	{{ certificate_authority.email_address }}
+commonName		=	{{ certificate_authority.intermediate.common_name }}
+emailAddress		=	{{ certificate_authority.intermediate.email_address }}
 
 [ req_attributes ]
-challengePassword	=	{{ certificate_authority.challenge_password }}
+challengePassword	=	{{ certificate_authority.intermediate.challenge_password }}
 
 [ v3_ca ]
 # Root certs
@@ -90,7 +90,6 @@ keyUsage		=	critical, digitalSignature, cRLSign, keyCertSign
 subjectAltName 		=	@alt_names
 
 [alt_names]
-
 {% for jail in production_jails %}
 DNS.{{ loop.index }}	=	{{ production_jails[jail].hostname }}.{{ external_domain }}
 {% endfor %}

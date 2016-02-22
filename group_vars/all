@@ -44,6 +44,7 @@ jenkins:
   - 'script-security'
   - 'antisamy-markup-formatter'
   - 'subversion'
+  - 'ansible'
 
 production_jails:
   postgresql:
@@ -84,7 +85,7 @@ production_jails:
       ports:   '587'
       proto:   'tcp'
   nginx_proxy:
-    hostname:  '05'
+    hostname:  'proxy'
     interface: 'lo1'
     ip:        '10.1.0.8'
     tag:       'nginx_proxy'
@@ -146,6 +147,7 @@ production_jails:
     pkgs:
     - git
     - jenkins
+    - ansible
 
 #  logging:
 #    hostname:  'log'

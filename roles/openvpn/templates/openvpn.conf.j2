@@ -16,6 +16,7 @@ cert /usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy
 key /usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.key.pem
 crl-verify /usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.csr.pem
 dh /usr/local/etc/openvpn/private/dh4096.pem
+tls-auth /usr/local/etc/openvpn/private/ta.key 1
 
 # Use LDAP auth instead of client certs.
 client-cert-not-required

@@ -52,7 +52,7 @@
   register: nginx_proxy_cert
   tags:
   - nginx_proxy
-  - nginx
+  - proxy
   - certs
 
 - name: Copy Proxy Key, CSR and Cert to the {{ production_jails.nginx_proxy.tag }} jail
