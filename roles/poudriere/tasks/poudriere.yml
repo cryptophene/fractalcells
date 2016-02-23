@@ -60,7 +60,7 @@
   - { line: "OPTIONS_SET=PGSQL POSTGRESQL PASSENGER NGINX PNG LDAP LDAPS OPENSSL", regexp: "^OPTIONS_SET="  }
   tags:
   - pkg-server
-- name: Build packages for Redmine and Zabbix
-  shell:  poudriere bulk -j build -p ports www/redmine www/nginx net-mgmt/zabbix24-server net-mgmt/zabbix24-agent net-mgmt/zabbix24-frontend devel/git
+- name: Build packages for Redmine, Zabbix and Gitlab
+  shell:  poudriere bulk -j build -p ports www/redmine www/nginx net-mgmt/zabbix24-server net-mgmt/zabbix24-agent net-mgmt/zabbix24-frontend devel/git www/gitlab
   tags:
   - pkg-server
