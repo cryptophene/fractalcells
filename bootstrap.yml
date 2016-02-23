@@ -1,0 +1,44 @@
+# bootstraps a remote node to respect ansible's authority
+# expects ssh root@ to work over port 22
+# on completion update inventory and move host out of bootstrap
+# and into freebsd group for updated port and other host_vars
+---
+- hosts: all
+  become: yes
+  become_method: su
+  gather_facts: no
+  tasks:
+  - name: Check if pkg(8) needs bootstrapping
+    raw: /usr/sbin/pkg -N
+    register: pkg
+    ignore_errors: True
+
+  - name: Bootstrap pkg tool
+    raw: /usr/bin/env ASSUME_ALWAYS_YES=1 /usr/sbin/pkg bootstrap -f
+    when: pkg|failed
+
+  - name: Install python and sudo so that ansible can run in non-raw mode
+    raw: /usr/sbin/pkg install -y python27 python sudo
+  
+  - name: Deploy rudimentary sudoers file.
+    script: "/bin/echo %wheel ALL=\\(ALL\\) NOPASSWD: ALL > /usr/local/etc/sudoers.d/fractalcells"
+
+- hosts: all
+  become: yes
+  become_method: sudo
+  tasks:
+
+  - name: Install management tools
+    pkgng:
+      name: "{{ item }}"
+      state: present
+    with_items:
+    - tmux
+    - vim-lite
+
+  - name: allow wheel to sudo - the proper way
+    copy:
+      content: "# ansible managed\n%wheel ALL=(ALL) NOPASSWD: ALL"
+      dest: /usr/local/etc/sudoers.d/fractalcells
+      mode: 0440
+      validate: 'visudo -cf %s'

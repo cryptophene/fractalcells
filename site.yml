@@ -22,7 +22,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - hosts: perceivon
-  sudo: true
+  become_method: sudo
   #strategy: free
   #accelerate: true
   roles:

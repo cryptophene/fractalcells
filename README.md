@@ -20,27 +20,20 @@ You may want to use the following software, and know your way around them before
 ## Howto
 
 ```
-    git clone https://bitbucket.org/fractalcells/ansible-iocage.git
-    git clone https://bitbucket.org/fractalcells/fractalcells.git
+    git clone https://github.com/fractalcells/ansible-iocage.git
+    git clone https://github.com/fractalcells/fractalcells.git
     cd fractalcells
-    cp ../ansible-iocage/iocage library/iocage
+    mkdir library
+    ln -s ../ansible-iocage/iocage library/iocage
     cat group_vars/*.example > group_vars/your_firm_name
     vim group_vars/your_firm_name 		# edit all the things
-    cp hosts.example hosts.your_firm_name
+    cp hosts.example hosts
     vim hosts 					# edit all the things, especially your_firm_name section
     cp ansible.cfg.example ansible.cfg
     vim ansible.cfg 				# edit all the things, especially your_firm_name section
-    ansible-playbook -i hosts.your_firm_name site.yml --check
-    ansible-playbook -i hosts.your_firm_name site.yml
-```
-Then, do this:
-
-```
-    backup and remove the root private keyfrom the {{ certificate_authority }}/root/private directory
-    dump on usb key
-    lock in safe
-    bury safe in garden
-    protect safe with dog.
+    ansible-playbook -i hosts bootstrap.yml
+    ansible-playbook -i hosts site.yml --check
+    ansible-playbook -i hosts site.yml
 ```
 
 If you know what you're doing: Congratulations, you're done now.

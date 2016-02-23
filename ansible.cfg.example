@@ -9,7 +9,7 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=6000s
 
 [your_firm_name]
 ssh_args = -o ControlMaster=auto -o ControlPersist=6000s
-hostfile = ./hosts.your_firm_name
+hostfile = ./hosts
 private_key_file = /path/to/your_firm_name/.ssh/private_key
 #remote_port = 9022
 remote_user = your_username
