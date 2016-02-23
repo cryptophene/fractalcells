@@ -25,12 +25,12 @@ You may want to use the following software, and know your way around them before
     cd fractalcells
     mkdir library
     ln -s ../ansible-iocage/iocage library/iocage
-    cat group_vars/*.example > group_vars/your_firm_name
-    vim group_vars/your_firm_name 		# edit all the things
+    cat group_vars/*.example > group_vars/fractalcells
+    vim group_vars/fractalcells 		# edit all the things
     cp hosts.example hosts
-    vim hosts 					# edit all the things, especially your_firm_name section
+    vim hosts 					# edit all the things, especially fractalcells section
     cp ansible.cfg.example ansible.cfg
-    vim ansible.cfg 				# edit all the things, especially your_firm_name section
+    vim ansible.cfg 				# edit all the things, especially fractalcells section
     ansible-playbook -i hosts bootstrap.yml
     ansible-playbook -i hosts site.yml --check
     ansible-playbook -i hosts site.yml
