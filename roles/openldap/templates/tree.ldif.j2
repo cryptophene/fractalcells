@@ -32,6 +32,7 @@ sn: {{ user.name.split(' ')[-1]  }}
 uid: {{ user.handle }}
 uidnumber: 1000
 userpassword: {{ ldap_user_hash.stdout }}
+mail: {{user.handle }}@{{ external_domain }}
 
 
 # Entry 5: cn=Zabbix admin,ou=people,dc=<your_org>
