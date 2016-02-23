@@ -148,6 +148,15 @@ production_jails:
     - git
     - jenkins
     - ansible
+  gitlab:
+    hostname:  'code'
+    interface: 'lo1'
+    ip:        '10.1.0.14'
+    tag:       'code'
+    pkgs:
+    - gitlab
+    - nginx
+    nginx_proxied: 80
 
 #  logging:
 #    hostname:  'log'

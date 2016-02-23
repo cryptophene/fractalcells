@@ -15,4 +15,6 @@ config:
       port:               587
   zabbix:
     password:             '1234'
-
+  gitlab:
+    secrets:              '9876'
+    root_password:        'password'

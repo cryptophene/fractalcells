@@ -48,3 +48,20 @@ sn: Zabbix admin
 uid: Admin
 uidnumber: 1001
 userpassword: {{ ldap_zabbix_hash.stdout }}
+
+# FIXME: Rethink this.
+# Entry 6: cn=Gitlab Admin,ou=people,dc=<your_org>
+dn: cn=Gitlab Admin,ou=people,dc=testing,dc=fractalcells,dc=com
+cn: Gitlab Admin
+gidnumber: 500
+givenname: Charlie
+homedirectory: /home/git
+loginshell: /bin/sh
+mail: root@{{ external_domain }}
+objectclass: inetOrgPerson
+objectclass: posixAccount
+objectclass: top
+sn: Root
+uid: root
+uidnumber: 1002
+userpassword: {{ ldap_gitlab_root_hash.stdout }}

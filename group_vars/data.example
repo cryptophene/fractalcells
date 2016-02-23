@@ -10,4 +10,7 @@ data:
     dbname:       'zabbix'
     dbuser:       'zabbix'
     password:     'iVPnz2K'
-
+  gitlab:
+    dbname:       'gitlab'
+    dbuser:       'gitlab'
+    password:     '2K3ApLd'

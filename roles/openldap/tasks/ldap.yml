@@ -70,6 +70,13 @@
   - ldap
   - auth
 
+- name: Hash Zabbix Admin password
+  iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"slappasswd -h '{SHA}' -s '{{ config.gitlab.root_password }}' \""
+  register: ldap_gitlab_root_hash
+  tags:
+  - ldap
+  - auth
+
 - name: Create directories
   file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
   tags:

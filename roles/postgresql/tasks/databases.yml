@@ -61,3 +61,22 @@
   - db
   - pgsql
   - pgsql-dbs
+
+# gitlab
+- name: Check if creating {{ data.gitlab.dbname }} database is necessary
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT datname FROM pg_database WHERE datname = \\\'{{ data.gitlab.dbname }}\\\' | psql template1 | grep {{ data.gitlab.dbname }}\" "
+  register: gitlab_db_present
+  ignore_errors: true
+  tags:
+  - db
+  - pgsql
+  - pgsql-dbs
+
+- name: Create {{ data.gitlab.dbname }} database
+  iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE DATABASE {{ data.gitlab.dbname }} WITH OWNER = {{ data.gitlab.dbuser }} | psql template1 \" "
+  when:
+  - gitlab_db_present | failed
+  tags:
+  - db
+  - pgsql
+  - pgsql-dbs
