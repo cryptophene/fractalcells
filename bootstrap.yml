@@ -1,7 +1,5 @@
-# bootstraps a remote node to respect ansible's authority
-# expects ssh root@ to work over port 22
-# on completion update inventory and move host out of bootstrap
-# and into freebsd group for updated port and other host_vars
+# Bootstraps a stock FreeBSD installation for use with Ansible.
+# Expects ssh to work, and your user to be in the wheel group.
 ---
 - hosts: all
   become: yes
