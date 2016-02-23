@@ -94,7 +94,7 @@
   - template_jail|success
   #- template_jail_pkgdb is not defined
   #- not template_jail_pkgdb.stat.exists
-  iocage: state=exec tag={{ testing_jails.template.tag }}{{ iocage_release_version }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ testing_jails.template.pkgs | join(' ') }} | tee -a /var/log/pkg.log.{{ testing_jails.template.tag }}{{ iocage_release_version }}\""
+  iocage: state=pkg tag={{ testing_jails.template.tag }}{{ iocage_release_version }} cmd="install -y {{ testing_jails.template.pkgs | join(' ') }}"
   tags:
   - iocage-cell
   - iocage-template

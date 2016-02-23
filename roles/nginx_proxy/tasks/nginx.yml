@@ -32,7 +32,7 @@
   when:
   - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is defined and nginx_proxy_jail['uuid'] != '-')"
   run_once: true
-  iocage: state=exec tag={{ production_jails.nginx_proxy.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.nginx_proxy.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.nginx_proxy.tag }}"
+  iocage: state=pkg tag={{ production_jails.nginx_proxy.tag }} cmd="install -y {{ production_jails.nginx_proxy.pkgs | join(' ') }}"
   tags:
   - nginx_proxy
   - proxy

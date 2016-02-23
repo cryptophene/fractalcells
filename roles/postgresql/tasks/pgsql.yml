@@ -30,14 +30,8 @@
   - pgsql-dbs
   register: postgresql_jail
 
-#- name: debug postgresql_jail_dir
-#  debug: var=postgresql_jail_dir
-#  tags:
-#  - pgsql
-#  - pgsql-debug
-
 - name: Install PostgreSQL 9.4
-  iocage: state=exec tag={{ production_jails.postgresql.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.postgresql.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.postgresql.tag }}"
+  iocage: state=pkg tag={{ production_jails.postgresql.tag }} cmd="install -y {{ production_jails.postgresql.pkgs | join(' ') }}"
   run_once: true
   when:
   - "'uuid' in postgresql_jail and (postgresql_jail['uuid'] is defined and postgresql_jail['uuid'] != '-')"

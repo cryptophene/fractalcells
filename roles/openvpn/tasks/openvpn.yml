@@ -64,7 +64,7 @@
 - name: Install Openvpn
   when:
   - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
-  iocage: state=exec tag={{ production_jails.openvpn.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.openvpn.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.openvpn.tag }}"
+  iocage: state=pkg tag={{ production_jails.openvpn.tag }} cmd="install -y {{ production_jails.openvpn.pkgs | join(' ') }}"
   tags:
   - openvpn
   - vpn

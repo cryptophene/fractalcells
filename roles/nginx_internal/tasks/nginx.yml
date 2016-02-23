@@ -42,7 +42,7 @@
   when:
   - "'uuid' in nginx_internal_jail and (nginx_internal_jail['uuid'] is defined and nginx_internal_jail['uuid'] != '-')"
   run_once: true
-  iocage: state=exec tag={{ production_jails.nginx_internal.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.nginx_internal.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.nginx_internal.tag }}"
+  iocage: state=pkg tag={{ production_jails.nginx_internal.tag }} cmd="install -y {{ production_jails.nginx_internal.pkgs | join(' ') }}"
   tags:
   - nginx_internal
   - proxy

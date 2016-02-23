@@ -2,9 +2,7 @@
 # Handle plugins
 - name: "{{ startup_delay_s | default(10) }}s delay while starting Jenkins"
   wait_for: host={{ production_jails.jenkins.ip }} port=8180 delay={{ startup_delay_s | default(10) }}
-  when: jenkins_install.changed or config_changed.changed
-  when:
-  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
+  when: jenkins_install.changed or jenkins_config.changed
   tags:
   - jenkins
   - ci
@@ -17,7 +15,6 @@
   delay: 10
   tags:
   - jenkins
-  - jenkins-debug
   - ci
 
 - name: Get Jenkins updates
@@ -25,7 +22,6 @@
   register: jenkins_updates
   tags:
   - jenkins
-  - jenkins-debug
   - ci
 
 - name: Update-center Jenkins
@@ -33,5 +29,4 @@
   when: jenkins_updates.changed
   tags:
   - jenkins
-  - jenkins-debug
   - ci

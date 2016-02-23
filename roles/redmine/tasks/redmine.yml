@@ -57,7 +57,7 @@
 - name: Install redmine 
   when:
   - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
-  iocage: state=exec tag={{ production_jails.redmine.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.redmine.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.redmine.tag }}"
+  iocage: state=pkg tag={{ production_jails.redmine.tag }} cmd="install -y {{ production_jails.redmine.pkgs | join(' ') }}"
   tags:
   - redmine
   - issues

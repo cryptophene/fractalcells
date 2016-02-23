@@ -57,7 +57,7 @@
 - name: Install zabbix pkgs
   when:
   - "'uuid' in zabbix_jail and (zabbix_jail['uuid'] is defined and zabbix_jail['uuid'] != '-')"
-  iocage: state=exec tag={{ production_jails.zabbix.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.zabbix.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.zabbix.tag }}"
+  iocage: state=pkg tag={{ production_jails.zabbix.tag }} cmd="install -y {{ production_jails.zabbix.pkgs | join(' ') }}"
   tags:
   - zabbix
   - monitoring

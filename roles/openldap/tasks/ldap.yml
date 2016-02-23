@@ -32,7 +32,7 @@
   when:
   - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
   run_once: true
-  iocage: state=exec tag={{ production_jails.openldap.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.openldap.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.openldap.tag }}"
+  iocage: state=pkg tag={{ production_jails.openldap.tag }} cmd="install -y {{ production_jails.openldap.pkgs | join(' ') }}"
   tags:
   - ldap
   - auth

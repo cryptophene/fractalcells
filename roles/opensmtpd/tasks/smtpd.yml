@@ -29,7 +29,7 @@
   register: opensmtpd_jail
 
 - name: Install OpenSMTPD
-  iocage: state=exec tag={{ production_jails.opensmtpd.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.opensmtpd.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.opensmtpd.tag }}"
+  iocage: state=pkg tag={{ production_jails.opensmtpd.tag }} cmd="install -y {{ production_jails.opensmtpd.pkgs | join(' ') }}"
   when:
   - "'uuid' in opensmtpd_jail and (opensmtpd_jail['uuid'] is defined and opensmtpd_jail['uuid'] != '-')"
   run_once: true

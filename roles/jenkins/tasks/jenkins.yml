@@ -25,7 +25,6 @@
   iocage: state=started tag='{{ production_jails.jenkins.tag }}'
   tags:
   - jenkins
-  - jenkins-debug
   - ci
   register: jenkins_jail
 
@@ -43,7 +42,8 @@
 - name: Install jenkins pkgs
   when:
   - jenkins_jail | success
-  iocage: state=exec tag={{ production_jails.jenkins.tag }} cmd="/bin/sh -c \"ASSUME_ALWAYS_YES=yes pkg install -y {{ production_jails.jenkins.pkgs | join(' ') }} \" | tee -a /var/log/pkg.log.{{ production_jails.jenkins.tag }}"
+  iocage: state=pkg tag={{ production_jails.jenkins.tag }} cmd="install -y {{ production_jails.jenkins.pkgs | join(' ') }}"
+  register: jenkins_install
   tags:
   - jenkins
   - ci
@@ -95,6 +95,7 @@
   - { name: "jenkins.model.JenkinsLocationConfiguration.xml", path: "/usr/local/jenkins", mode: 644 }
   - { name: "hudson.tasks.Mailer.xml", path: "/usr/local/jenkins", mode: 644 }
   when: not jenkins_pw_salted_cookie.stat.exists
+  register: jenkins_configs
   tags:
   - jenkins
   - ci
