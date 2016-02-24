@@ -160,10 +160,21 @@
   - openvpn
   - vpn
 
-- name: Start OpenVPN
-  iocage: state=exec tag={{ openvpn_jail.uuid }} cmd="/bin/sh -c \"service openvpn restart\""
+- name: Check if openvpn is already running
+  iocage: state=exec tag={{ openvpn_jail.uuid }} cmd="/bin/pgrep openvpn"
+  register: openvpn_running
+  ignore_errors: yes
   when:
   - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
+  tags:
+  - openvpn
+  - vpn
+
+- name: Start OpenVPN
+  iocage: state=exec tag={{ openvpn_jail.uuid }} cmd="/bin/sh -c \"service openvpn start\""
+  when:
+  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
+  - openvpn_running|failed
   tags:
   - openvpn
   - vpn
