@@ -99,3 +99,10 @@
   tags:
   - jenkins
   - ci
+
+- name: Touch Jenkins .pw.salted file
+  file: path="{{ jenkins_jail_dir.stat.path }}/usr/local/jenkins/.pw.salted" mode=644 owner=root group=wheel state=touch
+  when: not jenkins_pw_salted_cookie.stat.exists
+  tags:
+  - jenkins
+  - ci
