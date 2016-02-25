@@ -31,7 +31,7 @@ objectclass: top
 sn: {{ user.name.split(' ')[-1]  }}
 uid: {{ user.handle }}
 uidnumber: 1000
-userpassword: {{ ldap_user_hash.stdout }}
+userpassword: {{ ldap_user_hash.stdout | replace('\n','') }}
 mail: {{user.handle }}@{{ external_domain }}
 
 
@@ -47,7 +47,7 @@ objectclass: top
 sn: Zabbix admin
 uid: Admin
 uidnumber: 1001
-userpassword: {{ ldap_zabbix_hash.stdout }}
+userpassword: {{ ldap_zabbix_hash.stdout |replace('\n','') }}
 
 # FIXME: Rethink this.
 # Entry 6: cn=Gitlab Admin,ou=people,dc=<your_org>
@@ -64,4 +64,4 @@ objectclass: top
 sn: Root
 uid: root
 uidnumber: 1002
-userpassword: {{ ldap_gitlab_root_hash.stdout }}
+userpassword: {{ ldap_gitlab_root_hash.stdout |replace('\n','') }}
