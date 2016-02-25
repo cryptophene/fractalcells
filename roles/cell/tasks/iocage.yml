@@ -52,6 +52,16 @@
   - iocage-template
   - iocage-template-uuid
   - iocage-cell
+  - smtp
+  - pgsql
+  - ldap
+  - nginx_proxy
+  - nginx_internal
+  - redmine
+  - zabbix
+  - jenkins
+  - openvpn
+  - gitlab
 
 - assert:
     that:
