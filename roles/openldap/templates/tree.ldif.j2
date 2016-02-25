@@ -51,7 +51,7 @@ userpassword: {{ ldap_zabbix_hash.stdout |replace('\n','') }}
 
 # FIXME: Rethink this.
 # Entry 6: cn=Gitlab Admin,ou=people,dc=<your_org>
-dn: cn=Gitlab Admin,ou=people,dc=testing,dc=fractalcells,dc=com
+dn: cn=Gitlab Admin,ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
 cn: Gitlab Admin
 gidnumber: 500
 givenname: Charlie
