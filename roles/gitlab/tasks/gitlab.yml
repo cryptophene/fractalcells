@@ -64,6 +64,18 @@
   - gitlab
   - code
 
+- name: Deploy Redis config
+  when:
+  - "'uuid' in gitlab_jail and (gitlab_jail['uuid'] is defined and gitlab_jail['uuid'] != '-')"
+  lineinfile: dest={{ gitlab_jail_dir.stat.path }}/usr/local/etc/redis.conf state=present insertafter=EOF line="{{ item.line }}"
+  with_items:
+  - { line: "unixsocket /var/run/redis/redis.sock" }
+  - { line: "unixsocketperm 770" }
+  tags:
+  - gitlab
+  - code
+
+
 - name: Create directories
   file: path='{{ gitlab_jail_dir.stat.path }}{{ item.path }}' state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
   tags:
@@ -81,7 +93,6 @@
   - { name: "database.yml", path: "/usr/local/www/gitlab/config", mode: 644 }
   - { name: "secrets.yml", path: "/usr/local/www/gitlab/config", mode: 644 }
   - { name: "unicorn.rb", path: "/usr/local/www/gitlab/config", mode: 644 }
-  - { name: "redis.conf", path: "/usr/local/etc", mode: 644 }
   - { name: "authmethod_gitlab.sql", path: "/root", mode: 644 }
   - { name: "nginx.conf", path: "/usr/local/etc/nginx", mode: 644 }
   tags:
