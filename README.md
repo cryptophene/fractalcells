@@ -4,18 +4,18 @@ Launch: 2015-07-24
 
 Documentation: to be written^Wimproved.
 
-Please see [the Fractal cells website](http://www.fractalcells.com) for the "Why" and "What".
+Please see [the #fractalcells website](http://www.fractalcells.com) for the "Why" and "What".
 This README is, for the time being, exclusively about the "How"
 
 ## Requirements
 
 You may want to use the following software, and know your way around them before evaluating
-`fractalcells || hosting singularity':
+`fractalcells || hosting singularity`:
 
 1. [FreeBSD](https://www.freebsd.org/)
 1. One ZFS pool.
 1. [Ansible](https://www.ansible.com/)
-1. [ansible-iocage](https://bitbucket.org/fractalcells/ansible-iocage/src)
+1. [ansible-iocage](https://github.com/fractalcells/ansible-iocage/)
 
 ## Howto
 
@@ -47,8 +47,6 @@ If not: we do offer paid support.
 
 ## Powered By
 
-(Implemented already)
-
 1. [FreeBSD](https://www.freebsd.org)
 1. [ansible](https://www.ansible.com)
 1. [iocage](https://github.com/pannon/iocage)
@@ -59,9 +57,6 @@ If not: we do offer paid support.
 1. [Redmine](https://www.redmine.org)
 1. [Zabbix](https://www.zabbix.org)
 1. [Jenkins](https://www.jenkins-ci.org)
-
-(Work in Progress)
-
 1. [GitLab](https://www.gitlab.org)
 
 ## fractalcells pkg server
