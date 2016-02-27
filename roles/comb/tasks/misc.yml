@@ -42,6 +42,7 @@
   - { name: python27 }
   - { name: py27-keyczar  }
   - { name: py27-pycrypto  }
+  - { name: py27-fail2ban  }
   - { name: vim-lite  }
   - { name: rsync  }
   - { name: zxfer  }
@@ -54,6 +55,7 @@
   tags:
   - comb-misc
   - pkg-server
+  - fail2ban
 - name: See if portstree needs to be checked out.
   stat: path=/usr/ports/.svn
   register: ports_svn_dir
@@ -105,7 +107,7 @@
   - { name: sysutils/iocage-devel }
 
 - name: Install helpful default config files
-  copy: src="{{item.name}}" dest="{{item.path}}" mode="{{item.mode}}"
+  copy: src="{{ item.name }}" dest="{{ item.path }}" mode="{{ item.mode }}"
   with_items:
   - { name: "tmux.conf", path: "/usr/local/etc/tmux.conf", mode: 644 }
   - { name: "zshrc", path: "/usr/local/etc/zshrc", mode: 644 }
