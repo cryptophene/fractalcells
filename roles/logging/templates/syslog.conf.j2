@@ -1,0 +1,4 @@
+{% for jail in production_jails %}
++{{ production_jails[jail].hostname }}
+*.*	/var/log/cells/{{ production_jails[jail].hostname }}
+{% endfor %}

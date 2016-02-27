@@ -1,0 +1,6 @@
+::1                     localhost localhost.my.domain
+127.0.0.1               localhost localhost.my.domain
+
+{% for jail in production_jails %}
+{{ production_jails[jail].ip }}   {{ production_jails[jail].hostname }}
+{% endfor %}

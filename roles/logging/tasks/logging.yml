@@ -1,0 +1,103 @@
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+- name: Make sure Logging jail is started
+  iocage: state=started tag='{{ production_jails.logging.tag }}'
+  tags:
+  - logging
+  - logs-debug
+  - logs
+  register: logging_jail
+
+- name: Enable Logging services
+  when:
+  - "'uuid' in logging_jail and (logging_jail['uuid'] is defined and logging_jail['uuid'] != '-')"
+  lineinfile: dest={{ logging_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}" regexp="{{ item.regexp }}"
+  with_items:
+  - { line: "syslogd_enable=\"YES\"", regexp: "^syslogd_enable" }
+  - { line: "syslogd_flags=\"-a {{ internal_netmask }} -v -v\"", regexp: "^syslogd_flags" }
+  tags:
+  - logging
+  - logs
+
+#- name: Install Logging pkgs
+#  when:
+#  - logging_jail | success
+#  iocage: state=pkg tag={{ production_jails.logging.tag }} cmd="install -y {{ production_jails.logging.pkgs | join(' ') }}"
+#  register: logging_install
+#  tags:
+#  - logging
+#  - logs
+
+
+- name: Create directories
+  file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
+  tags:
+  - logging
+  - logs
+  when:
+  - "'uuid' in logging_jail and (logging_jail['uuid'] is defined and logging_jail['uuid'] != '-')"
+  with_items:
+  - { path: '{{ logging_jail_dir.stat.path }}/var/log/cells/', mode: '755', owner: root, group: wheel }
+
+- name: Deploy logging configs
+  template: src='{{ item.name }}.j2' dest='{{ logging_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644 owner=818 group=818
+  with_items:
+  - { name: "syslog.conf", path: "/etc", mode: 644 }
+  register: logging_configs
+  tags:
+  - logging
+  - logs
+
+- name: Fix logging hosts file
+  lineinfile: dest={{ logging_jail_dir.stat.path }}/etc/hosts state=present line="{{ production_jails.logging.ip }}  {{ production_jails.logging.hostname }} {{ logging_jail.uuid }}" regexp="^{{ production_jails.logging.ip }}"
+  when:
+  - "'uuid' in logging_jail and (logging_jail['uuid'] is defined and logging_jail['uuid'] != '-')"
+  tags:
+  - logging
+  - logs
+
+- name: Fix logging syslog.conf file
+  lineinfile: dest={{ logging_jail_dir.stat.path }}/etc/syslog.conf state=present line="+{{ logging_jail.uuid }}" regexp="^\+{{ production_jails.logging.hostname }}"
+  when:
+  - "'uuid' in logging_jail and (logging_jail['uuid'] is defined and logging_jail['uuid'] != '-')"
+  tags:
+  - logging
+  - logs
+  - logs-debug
+
+- name: Touch logfiles into existence
+  file: path="{{ logging_jail_dir.stat.path }}/var/log/cells/{{ item.value.hostname }}" mode=644 owner=root group=wheel state=touch
+  with_dict: "{{ production_jails }}"
+  
+  tags:
+  - logging
+  - logs
+
+- name: Restart syslogd
+  iocage: state=exec tag={{ logging_jail.uuid }} cmd="/bin/sh -c \"service syslogd restart\""
+  when:
+  - logging_configs | changed
+  tags:
+  - logging
+  - logs

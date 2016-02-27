@@ -157,6 +157,11 @@ production_jails:
     - gitlab
     - nginx
     nginx_proxied: 80
+  logging:
+    hostname:  'logs'
+    interface: 'lo1'
+    ip:        '10.1.0.15'
+    tag:       'logs'
 
 #  logging:
 #    hostname:  'log'

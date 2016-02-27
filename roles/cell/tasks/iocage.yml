@@ -131,12 +131,18 @@
   template: src='{{ item.name }}.j2' dest='{{ template_jail_dir.stat.path }}{{ item.path }}/{{ item.name }}' mode={{ item.mode}} owner=root group=257
   with_items:
   - { name: "zabbix_agentd.conf", path: "/usr/local/etc/zabbix24", mode: 644 }
+  - { name: "hosts", path: "/etc", mode: 644 }
+  - { name: "syslog.conf", path: "/etc", mode: 644 }
   tags:
   - iocage-cell
   - iocage-template
 
 - name: Enable zabbix_agentd service
-  lineinfile: dest={{ template_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="zabbix_agentd_enable=\"YES\""
+  lineinfile: dest={{ template_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line={{ item.line }}
+  with_items:
+  - { line: "zabbix_agentd_enable=\"YES\"" }
+  - { line: "syslogd_enable=\"YES\"" }
+  - { line: "syslogd_flags=\"-s -v -v\"" }
   when:
   - template_jail|success
   tags:
