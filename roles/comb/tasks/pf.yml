@@ -27,13 +27,15 @@
           - { line: "pf_enable=\"YES\"" }
   tags:
   - pf
+  - pkg-server
 
 - name: Check if pf is already loaded
   shell:  kldstat -q -m pf
   register: module_pf_loaded
   ignore_errors: yes
   tags:
-   - pf
+  - pf
+  - pkg-server
 #- name: debug pf_nat_loaded
 #  debug: var=pf_nat_loaded
 #  tags:
@@ -42,16 +44,17 @@
   shell: kldload pf
   when: module_pf_loaded|failed
   tags:
-   - pf
+  - pf
+  - pkg-server
   notify: restart pf
 - name: Deploy pf.conf
   template: src='pf.conf.j2' dest='/etc/pf.conf' mode=0640
   run_once: true
   tags:
   - pf
-  - pf-debug
+  - pkg-server
 - name: Restart pf
   service: name=pf state=started enabled=yes
   tags:
   - pf
-  - pf-debug
+  - pkg-server

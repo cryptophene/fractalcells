@@ -55,7 +55,6 @@
   tags:
   - comb-misc
   - pkg-server
-  - fail2ban
 - name: See if portstree needs to be checked out.
   stat: path=/usr/ports/.svn
   register: ports_svn_dir

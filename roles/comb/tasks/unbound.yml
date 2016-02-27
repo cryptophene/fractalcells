@@ -2,15 +2,25 @@
 - name: Append unbound settings to rc.conf
   lineinfile: dest=/etc/rc.conf line={{ item.line }}
   with_items:
-          - { line: "local_unbound_enable=\"YES\"" }
+  - { line: "local_unbound_enable=\"YES\"" }
   tags:
   - dns
   - unbound
+  - pkg-server
+- name: Set unbound to nameserver.
+  lineinfile: dest=/etc/resolv.conf line={{ item.line }}
+  with_items:
+  - { line: "nameserver 127.0.0.1" }
+  tags:
+  - dns
+  - unbound
+  - pkg-server
 - name: Deploy unbound.conf
   template: src='unbound.conf.j2' dest='/var/unbound/unbound.conf' mode=0644
   tags:
   - dns
   - unbound
+  - pkg-server
 - name: Deploy forward and lan-zones configs
   copy: src='unbound_{{ item.name }}' dest='/var/unbound/{{ item.name }}' mode=0644
   with_items:
@@ -19,9 +29,11 @@
   tags:
   - dns
   - unbound
+  - pkg-server
 
 - name: restart unbound
   service: name=local_unbound state=restarted
   tags:
   - dns
   - unbound
+  - pkg-server
