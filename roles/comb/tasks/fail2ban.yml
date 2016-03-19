@@ -26,12 +26,15 @@
           - { line: "fail2ban_enable=\"YES\"" }
   tags:
   - fail2ban
+  - pkg-server
 
 - name: Deploy fail2ban sshd-pf.local
   copy: src="ssh-pf.local" dest="/usr/local/etc/fail2ban/jail.d"
   tags:
   - fail2ban
+  - pkg-server
 - name: Restart fail2ban
   service: name=fail2ban state=started enabled=yes
   tags:
   - fail2ban
+  - pkg-server
