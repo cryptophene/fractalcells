@@ -23,6 +23,9 @@ Port {{ config.host.sshd_port }}
 #ListenAddress ::
 ListenAddress {{ internal_ip }}
 ListenAddress {{ ansible_default_ipv4.address }}
+{% if 'address' in ansible_default_ipv6 %}
+ListenAddress {{ ansible_default_ipv6.address }}
+{% endif %}
 
 # Ths  default requires explicit activation of protocol 1
 #Protocol 2
