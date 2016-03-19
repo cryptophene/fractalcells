@@ -33,6 +33,18 @@
   tags:
   - comb-misc
   - pkg-server
+
+- name: Install helpful default config files
+  copy: src="{{ item.name }}" dest="{{ item.path }}" mode="{{ item.mode }}"
+  with_items:
+  - { name: "tmux.conf", path: "/usr/local/etc/tmux.conf", mode: 644 }
+  - { name: "zshrc", path: "/usr/local/etc/zshrc", mode: 644 }
+  - { name: "devfs.rules", path: "/etc/devfs.rules", mode: 644 }
+  - { name: "FreeBSD.conf", path: "/etc/pkg/FreeBSD.conf", mode: 644 }
+  tags:
+  - comb-misc
+  - pkg-server
+
 - name: Install some packages
   pkgng: name={{ item.name }} state=present
   with_items:
@@ -49,68 +61,17 @@
   - { name: iftop  }
   - { name: postgresql94-client  }
   - { name: poudriere-devel }
+  - { name: iocage-devel }
   - { name: dialog4ports }
   - { name: curl }
   - { name: portupgrade  }
   tags:
   - comb-misc
   - pkg-server
-- name: See if portstree needs to be checked out.
-  stat: path=/usr/ports/.svn
-  register: ports_svn_dir
-  tags:
-  - comb-misc
-  - pkg-server
-- name: Checkout portstree
-  shell: svnlite co svn://svn.freebsd.org/ports/head /usr/ports >/dev/null
-  tags:
-  - comb-misc
-  - pkg-server
-  when:
-  - ports_svn_dir.stat.isdir is undefined
-
-- name: See if portstree needs to be updated
-  shell: /bin/sh -c "[ \"`cd  /usr/ports && svnlite info | awk '/Last Changed Date/ {print $4}'`\" == `date \"+%Y-%m-%d\"` ]"
-  register: ports_svn_uptodate
-  ignore_errors: true
-  tags:
-  - comb-misc
-  - pkg-server
-- name: Update portstree
-  shell: cd /usr/ports && svnlite up >/dev/null
-  when:
-  - ports_svn_dir.stat.isdir is defined and ports_svn_uptodate|failed
-  tags:
-  - comb-misc
-  - pkg-server
+  - fail2ban
 
 - name: Create distfiles dir
   file: path=/usr/ports/distfiles state=directory mode=0755
-  tags:
-  - comb-misc
-  - pkg-server
-
-- name: Install py27-psycopg2
-  portinstall: name={{ item.name }} state=present use_packages=no
-  tags:
-  - comb-misc
-  with_items:
-  - { name: databases/py-psycopg2 }
-
-- name: Install iocage-devel
-  portinstall: name={{ item.name }} state=present use_packages=no
-  tags:
-  - comb-misc
-  - pkg-server
-  with_items:
-  - { name: sysutils/iocage-devel }
-
-- name: Install helpful default config files
-  copy: src="{{ item.name }}" dest="{{ item.path }}" mode="{{ item.mode }}"
-  with_items:
-  - { name: "tmux.conf", path: "/usr/local/etc/tmux.conf", mode: 644 }
-  - { name: "zshrc", path: "/usr/local/etc/zshrc", mode: 644 }
-  - { name: "devfs.rules", path: "/etc/devfs.rules", mode: 644 }
   tags:
   - comb-misc
   - pkg-server

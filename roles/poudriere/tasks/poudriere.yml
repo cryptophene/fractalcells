@@ -30,6 +30,33 @@
   tags:
   - pkg-server
 
+- name: See if portstree needs to be checked out.
+  stat: path=/usr/ports/.svn
+  register: ports_svn_dir
+  tags:
+  - pkg-server
+- name: Checkout portstree
+  shell: svnlite co svn://svn.freebsd.org/ports/head /usr/ports >/dev/null
+  tags:
+  - pkg-server
+  when:
+  - ports_svn_dir.stat.isdir is undefined
+
+- name: See if portstree needs to be updated
+  shell: /bin/sh -c "[ \"`cd  /usr/ports && svnlite info | awk '/Last Changed Date/ {print $4}'`\" == `date \"+%Y-%m-%d\"` ]"
+  register: ports_svn_uptodate
+  ignore_errors: true
+  tags:
+  - comb-misc
+  - pkg-server
+- name: Update portstree
+  shell: cd /usr/ports && svnlite up >/dev/null
+  when:
+  - ports_svn_dir.stat.isdir is defined and ports_svn_uptodate|failed
+  tags:
+  - comb-misc
+  - pkg-server
+
 - name: See if poudriere buildjail needs to be created.
   shell: poudriere jail -l -q |grep build
   register: poudriere_buildjail_present
@@ -61,6 +88,6 @@
   tags:
   - pkg-server
 - name: Build packages for Redmine, Zabbix and Gitlab
-  shell:  poudriere bulk -j build -p ports www/redmine www/nginx net-mgmt/zabbix24-server net-mgmt/zabbix24-agent net-mgmt/zabbix24-frontend devel/git www/gitlab
+  shell:  poudriere bulk -C -j build -p ports www/redmine www/nginx net-mgmt/zabbix24-server net-mgmt/zabbix24-agent net-mgmt/zabbix24-frontend devel/git www/gitlab net/openldap24-server net/openldap24-client/
   tags:
   - pkg-server
