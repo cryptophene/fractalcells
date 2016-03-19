@@ -119,15 +119,15 @@
   - { path: '{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.key.pem', mode: 400, owner: 389, group: 389 }
   - { path: '{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_ca_intermediate.cert.pem', mode: 444, owner: 389, group: 389 }
 
-- name: See if DH4096 cert is present
+- name: See if DH cert is present
   stat: path='{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/dh4096.pem'
   register: openvpn_dh_4096
   tags:
   - openvpn
   - vpn
 
-- name: Deploy DH 4096 cert
-  shell: openssl dhparam -out {{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/dh4096.pem 4096
+- name: Deploy DH cert ({{ config.openvpn.dhparam_strength }} bits)
+  shell: openssl dhparam -out {{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/dh{{ config.openvpn.dhparam_strength }}.pem {{ config.openvpn.dhparam_strength }}
   when:
   - not openvpn_dh_4096.stat.exists
   tags:

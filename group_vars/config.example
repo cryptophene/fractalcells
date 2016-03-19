@@ -18,3 +18,5 @@ config:
   gitlab:
     secrets:              '9876'
     root_password:        'password'
+  openvpn:
+    dhparam_strength: 1024
