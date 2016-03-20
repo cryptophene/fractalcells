@@ -1,7 +1,7 @@
 ---
 --- Add LDAP auth method from the beginning.
 ---
-INSERT INTO auth_sources (id, type, name, host, port, account, account_password, base_dn, attr_login, attr_firstname, attr_lastname, attr_mail, onthefly_register, tls, filter, timeout) VALUES (1, 'AuthSourceLdap', '{{ production_jails.openldap.hostname }}', '{{ production_jails.openldap.ip }}', 389, 'cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}', '{{ config.openldap.manager_password }}', 'dc={{ external_domain.split('.') | join(',dc=') }}', 'uid', 'givenName', 'sn', '', true, false, '(objectClass=posixAccount)', NULL);
+INSERT INTO auth_sources (id, type, name, host, port, account, account_password, base_dn, attr_login, attr_firstname, attr_lastname, attr_mail, onthefly_register, tls, filter, timeout) VALUES (1, 'AuthSourceLdap', '{{ production_jails.openldap.hostname }}', '{{ production_jails.openldap.ip }}', 389, 'cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}', '{{ config.openldap.manager_password }}', 'dc={{ external_domain.split('.') | join(',dc=') }}', 'uid', 'givenName', 'sn', '', true, false, '(&(objectClass=posixAccount)(memberOf=cn=redmine-users,cn=users,dc={{ external_domain.split('.') | join(',dc=') }}', NULL);
 
 ---
 --- Some sensible default settings

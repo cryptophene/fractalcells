@@ -67,6 +67,7 @@
   - { name: "php-fpm.conf", path: "/usr/local/etc", mode: 644, owner: root, group: wheel  }
   - { name: "internal.conf", path: "/usr/local/etc/nginx/conf.d", mode: 644, owner: root, group: wheel  }
   - { name: "config.php", path: "/usr/local/www/phpldapadmin/config", mode: 600, owner: www, group: www }
+  - { name: "posixAccount.xml", path: "/usr/local/www/phpldapadmin/templates/creation", mode: 600, owner: www, group: www }
   - { name: "config.inc.php", path: "/usr/local/www/phpPgAdmin/conf", mode: 600, owner: www, group: www }
   - { name: "zabbix.conf.php", path: "/usr/local/www/zabbix24/conf", mode: 600, owner: www, group: www }
   - { name: "index.html", path: "/usr/local/www/nginx-dist", mode: 644, owner: www, group: www }

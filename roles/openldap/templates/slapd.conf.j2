@@ -32,12 +32,13 @@ maxsize         1073741824
 suffix          "dc={{ external_domain.split('.') | join(',dc=') }}"
 rootdn          "cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}"
 rootpw          {{ ldap_manager_hash.stdout }}
-# The database directory MUST exist prior to running slapd AND 
+# The database directory MUST exist prior to running slapd AND
 # should only be accessible by the slapd and slap tools.
 # Mode 700 recommended.
 directory       /var/db/openldap-data
 # Indices to maintain
 index   objectClass     eq
+index   uid             eq,sub
 
 # security first
 #security ssf=256
@@ -58,5 +59,14 @@ access to *
   by self write
   by * read
 
+include                 /usr/local/etc/openldap/schema/posixgroupofnames.schema
+
 password-hash {sha}
+
+overlay memberof
+memberof-dangling       error
+memberof-refint         TRUE
+memberof-group-oc       posixGroupOfNames
+memberof-member-ad      member
+memberof-memberof-ad    memberOf
 

@@ -19,8 +19,14 @@ objectclass: top
 objectclass: organizationalUnit
 ou: people
 
+# Entry 3a: ou=accounts,dc=<your org>
+dn: ou=accounts,dc={{ external_domain.split('.') | join(',dc=') }}
+objectclass: top
+objectclass: organizationalUnit
+ou: accounts
+
 # Entry 4: cn=<your user>,ou=people,dc=<your org>
-dn: cn={{ user.name}},ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
+dn: cn={{ user.name }},ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
 cn: {{ user.name }}
 gidnumber: 500
 givenname: {{ user.name.split(' ')[0]  }}
@@ -35,8 +41,8 @@ userpassword: {{ ldap_user_hash.stdout | replace('\n','') }}
 mail: {{user.handle }}@{{ external_domain }}
 
 
-# Entry 5: cn=Zabbix admin,ou=people,dc=<your_org>
-dn: cn=Zabbix admin,ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
+# Entry 5: cn=Zabbix admin,ou=accounts,dc=<your_org>
+dn: cn=Zabbix admin,ou=accounts,dc={{ external_domain.split('.') | join(',dc=') }}
 cn:  Zabbix admin
 gidnumber: 500
 homedirectory: /home/Zabbix
@@ -50,8 +56,8 @@ uidnumber: 1001
 userpassword: {{ ldap_zabbix_hash.stdout |replace('\n','') }}
 
 # FIXME: Rethink this.
-# Entry 6: cn=Gitlab Admin,ou=people,dc=<your_org>
-dn: cn=Gitlab Admin,ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
+# Entry 6: cn=Gitlab Admin,ou=accounts,dc=<your_org>
+dn: cn=Gitlab Admin,ou=accounts,dc={{ external_domain.split('.') | join(',dc=') }}
 cn: Gitlab Admin
 gidnumber: 500
 givenname: Charlie
@@ -65,3 +71,29 @@ sn: Root
 uid: root
 uidnumber: 1002
 userpassword: {{ ldap_gitlab_root_hash.stdout |replace('\n','') }}
+
+# Entry 7: cn=gitlab-users,cn=users,dc=<your_org>
+# Add your user and root to gitlab-users group
+dn: cn=gitlab-users,cn=users,dc={{ external_domain.split('.') | join(',dc=') }}
+cn: gitlab-users
+gidnumber: 501
+member: cn={{ user.name }},ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
+member: uid=root,ou=accounts,dc={{ external_domain.split('.') | join(',dc=') }}
+objectclass: posixGroupOfNames
+objectclass: top
+
+# Entry 8: cn=jenkins-users,cn=users,dc=<your_org>
+dn: cn=jenkins-users,cn=users,dc={{ external_domain.split('.') | join(',dc=') }}
+cn: jenkins-users
+gidnumber: 501
+member: cn={{ user.name }},ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
+objectclass: posixGroupOfNames
+objectclass: top
+
+# Entry 9: cn=redmine-users,cn=users,dc=<your_org>
+dn: cn=redmine-users,cn=users,dc={{ external_domain.split('.') | join(',dc=') }}
+cn: jenkins-users
+gidnumber: 501
+member: cn={{ user.name }},ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
+objectclass: posixGroupOfNames
+objectclass: top

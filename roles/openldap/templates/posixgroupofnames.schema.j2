@@ -1,0 +1,5 @@
+objectclass ( 2.25.171021432491944679065917574008555291931.99.4 NAME 'posixGroupOfNames'
+        DESC 'Abstraction of a group of accounts as DNs'
+        SUP top STRUCTURAL 
+        MUST ( cn $ gidNumber )
+        MAY ( userPassword $ member $ description ) )

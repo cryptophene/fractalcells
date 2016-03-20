@@ -28,6 +28,22 @@
   - auth
   register: openldap_jail
 
+- name: Remove freebsd.conf
+  file: path={{ openldap_jail_dir.stat.path }}/etc/pkg/FreeBSD.conf state=absent
+  tags:
+  - ldap
+  - auth
+
+- name: Deploy pkg.fractalcells.com repo config
+  template: src='{{ item.name }}.j2' dest='{{ openldap_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
+  with_items:
+  - { name: "fractalcells.conf", path: "/etc/pkg", mode: 644 }
+  when:
+  - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
+  tags:
+  - ldap
+  - auth
+
 - name: Install OpenLDAP 2.4
   when:
   - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
@@ -96,7 +112,9 @@
   with_items:
   - { name: "slapd.conf", path: "/usr/local/etc/openldap", mode: 644 }
   - { name: "ldap.conf", path: "/usr/local/etc/openldap", mode: 644 }
+  - { name: "slapd.ldif", path: "/usr/local/etc/openldap", mode: 644 }
   - { name: "tree.ldif", path: "/root/", mode: 644 }
+  - { name: "posixgroupofnames.schema", path: "/usr/local/etc/openldap/schema", mode: 644 }
   register: openldap_config_deployed
   when:
   - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"

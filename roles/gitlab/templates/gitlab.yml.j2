@@ -247,7 +247,7 @@ production: &base
         #
         #   Note: GitLab does not support omniauth-ldap's custom filter syntax.
         #
-        user_filter: '(objectClass=posixAccount)'
+        user_filter: '(&(objectClass=posixAccount)(memberOf=cn=gitlab-users,cn=users,dc={{ external_domain.split('.') | join(',dc=') }}'
 
         # LDAP attributes that GitLab will use to create an account for the LDAP user.
         # The specified attribute can either be the attribute name as a string (e.g. 'mail'),
