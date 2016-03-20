@@ -36,7 +36,7 @@
 
   - name: allow wheel to sudo - the proper way
     copy:
-      content: "# ansible managed\n%wheel ALL=(ALL) NOPASSWD: ALL"
+      content: "# fractalcells managed\n%wheel ALL=(ALL) NOPASSWD: ALL"
       dest: /usr/local/etc/sudoers.d/fractalcells
       mode: 0440
       validate: 'visudo -cf %s'
