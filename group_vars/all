@@ -56,9 +56,6 @@ production_jails:
     - postgresql94-client
     - postgresql94-server
     - postgresql94-contrib
-    pf:
-      ports:   '5432'
-      proto:   'tcp, udp'
   openldap:
     hostname:  'auth'
     interface: 'lo1'
@@ -67,12 +64,6 @@ production_jails:
     pkgs:
     - openldap-server
     - openldap-client
-    - ca_root_nss
-    - pam_ldap
-    - nss_ldap
-    pf:
-      ports:   '389, 636'
-      proto:   'tcp'
   opensmtpd:
     hostname:  'mx'
     interface: 'lo1'
