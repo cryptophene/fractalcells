@@ -177,7 +177,7 @@
   - auth
 
 - name: import tree.ldif
-  iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"slapadd -l /root/tree.ldif\" "
+  iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"ldapmodify -h localhost -p 389 -D cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}  -w '{{ config.openldap.manager_password }}' -a -f /root/tree.ldif\" "
   tags:
   - ldap
   - auth

@@ -78,7 +78,7 @@ dn: cn=gitlab-users,cn=users,dc={{ external_domain.split('.') | join(',dc=') }}
 cn: gitlab-users
 gidnumber: 501
 member: cn={{ user.name }},ou=people,dc={{ external_domain.split('.') | join(',dc=') }}
-member: uid=root,ou=accounts,dc={{ external_domain.split('.') | join(',dc=') }}
+member: cn=Gitlab Admin,ou=accounts,dc={{ external_domain.split('.') | join(',dc=') }}
 objectclass: posixGroupOfNames
 objectclass: top
 
