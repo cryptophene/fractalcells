@@ -21,23 +21,15 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
-- name: basejail uuid
-  iocage: state=exists tag='basejail_{{ iocage_release_version }}'
-  register: basejail
-  tags:
-  - iocage-template
-  - iocage-cell
-
 - name: Check if template jail already exists
   iocage: state=exists tag='template_{{ iocage_release_version }}'
   register: template_jail
   tags:
   - iocage-template
   - iocage-cell
-  register: template_jail
 
 - name: Create template jail
-  iocage: state=cloned clone_from='basejail_{{ iocage_release_version }}' tag='template_{{ iocage_release_version }}' properties="pkglist={{ iocage_jails_dir }}/pkglist.txt ip4_addr='{{ testing_jails.template.interface }}|{{ testing_jails.template.ip }}' allow_sysvipc=1 resolver='nameserver {{ internal_ip }}'"
+  iocage: state=template tag='template_{{ iocage_release_version }}' release={{ iocage_release_version }} properties="pkglist='{{ iocage_jails_dir }}/pkglist.txt' ip4_addr='{{ testing_jails.template.interface }}|{{ testing_jails.template.ip }}' allow_sysvipc='1' resolver='nameserver {{ internal_ip }}'"
   tags:
   - iocage-cell
   - iocage-template
@@ -68,7 +60,7 @@
      - template_jail is defined and template_jail.uuid != ""
 
 - name: Start template jail
-  iocage: state=started tag='template_{{ iocage_release_version }}'
+  iocage: state=started tag='template_{{ iocage_release_version }}' force=yes
   tags:
   - iocage-cell
   - iocage-template
@@ -79,7 +71,7 @@
       - template_jail|success
 
 - name: Check if template jail needs pkg bootstrap
-  stat: path=/iocage/jails/{{ template_jail.uuid }}/root/var/db/pkg/local.sqlite
+  stat: path=/iocage/templates/{{ template_jail.uuid }}/root/var/db/pkg/local.sqlite
   register: template_jail_pkgdb
   run_once: true
   tags:
@@ -91,7 +83,7 @@
   when:
   - template_jail|success
   #- template_jail_pkgdb is not defined
-  #- not template_jail_pkgdb.stat.exists
+  - not template_jail_pkgdb.stat.exists
   run_once: true
   tags:
   - iocage-cell
@@ -110,7 +102,7 @@
   - iocage-template
 
 - name: Register jail's root diretory
-  stat: path='/iocage/jails/{{ template_jail.uuid }}/root/'
+  stat: path='/iocage/templates/template_{{ iocage_release_version }}/root'
   register: template_jail_dir
   tags:
   - iocage-cell
