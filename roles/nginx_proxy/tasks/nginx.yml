@@ -45,6 +45,7 @@
   with_items:
   - { path: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/', mode: '700', owner: 389, group: 389 }
   - { path: '{{ nginx_proxy_jail_dir.stat.path }}/usr/local/etc/nginx/conf.d', mode: '755', owner: root, group: wheel }
+  - { path: '{{ nginx_proxy_jail_dir.stat.path }}/usr/local/etc/nginx/sites-enabled', mode: '755', owner: root, group: wheel }
   - { path: '{{ nginx_proxy_jail_dir.stat.path }}/var/log/nginx', mode: '755', owner: www, group: www }
 
 - name: Determine if {{ production_jails.nginx_proxy.tag }} jail needs certs
@@ -95,8 +96,19 @@
   - nginx_proxy
   - proxy
 
+- name: Deploy NGINX SSL config file
+  template: src='ssl.conf.j2' dest='{{ nginx_proxy_jail_dir.stat.path }}/usr/local/etc/nginx/conf.d/ssl.conf' mode=644 owner=80 group=80
+  with_dict: "{{ production_jails }}"
+  when:
+  - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is defined and nginx_proxy_jail['uuid'] != '-')"
+  - item.value.nginx_proxied is defined
+  register: nginx_proxy_site_config_deployed
+  tags:
+  - nginx_proxy
+  - nginx_proxy-debug
+
 - name: Deploy NGINX site config files
-  template: src='forward.j2' dest='{{ nginx_proxy_jail_dir.stat.path }}/usr/local/etc/nginx/conf.d/{{ item.value.hostname }}.{{ external_domain }}.conf' mode=644 owner=80 group=80
+  template: src='forward.j2' dest='{{ nginx_proxy_jail_dir.stat.path }}/usr/local/etc/nginx/sites-enabled/{{ item.value.hostname }}.{{ external_domain }}.conf' mode=644 owner=80 group=80
   with_dict: "{{ production_jails }}"
   when:
   - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is defined and nginx_proxy_jail['uuid'] != '-')"
