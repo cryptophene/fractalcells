@@ -7,25 +7,39 @@
   - dns
   - unbound
   - pkg-server
+
 - name: Set unbound to nameserver.
   lineinfile: dest=/etc/resolv.conf line={{ item.line }}
   with_items:
   - { line: "nameserver 127.0.0.1" }
+  register: unbound_resolvconf
   tags:
   - dns
   - unbound
   - pkg-server
+
+- name: Setup unbound.
+  shell: /etc/rc.d/local_unbound setup
+  when: unbound_resolvconf|changed
+  tags:
+  - dns
+  - unbound
+
 - name: Deploy unbound.conf
-  template: src='unbound.conf.j2' dest='/var/unbound/unbound.conf' mode=0644
+  template: src='unbound_fractalcells.conf.j2' dest='/var/unbound/unbound.conf' mode=0644
+  when: unbound_resolvconf|changed
+  register: unbound_config
   tags:
   - dns
   - unbound
   - pkg-server
 - name: Deploy forward and lan-zones configs
-  copy: src='unbound_{{ item.name }}' dest='/var/unbound/{{ item.name }}' mode=0644
+  copy: src='unbound_{{ item.name }}' dest='{{ item.path }}/{{ item.name }}' mode=0644
+  when: unbound_resolvconf|changed
+  register: unbound_forward_config
   with_items:
-  - { name: forward.conf }
-  - { name: lan-zones.conf }
+  - { name: forward.conf, path: '/var/unbound' }
+  - { name: lan-zones.conf, path: '/var/unbound' }
   tags:
   - dns
   - unbound
@@ -33,6 +47,7 @@
 
 - name: restart unbound
   service: name=local_unbound state=restarted
+  when: unbound_config|changed or unbound_forward_config|changed
   tags:
   - dns
   - unbound

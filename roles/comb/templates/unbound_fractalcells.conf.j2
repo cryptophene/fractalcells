@@ -11,6 +11,10 @@ server:
         access-control: {{ internal_netmask }} allow_snoop
         access-control: {{ openvpn.subnet }} allow_snoop
 
+remote-control:
+        control-enable: yes
+        control-use-cert: no
+
 include: /var/unbound/forward.conf
 include: /var/unbound/lan-zones.conf
 include: /var/unbound/conf.d/*.conf
