@@ -129,6 +129,27 @@
   - iocage-cell
   - iocage-template
 
+- name: Remove {{ host_os }}.conf
+  file: path={{ template_jail_dir.stat.path }}/etc/pkg/{{ host_os }}.conf state=absent
+  tags:
+  - iocage-cell
+  - iocage-template
+
+- name: Remove FreeBSD.conf
+  file: path={{ template_jail_dir.stat.path }}/etc/pkg/FreeBSD.conf state=absent
+  tags:
+  - iocage-cell
+  - iocage-template
+
+- name: Deploy pkg.fractalcells.com repo config
+  template: src='{{ item.name }}.j2' dest='{{ template_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
+  with_items:
+  - { name: "fractalcells.conf", path: "/etc/pkg", mode: 644 }
+  tags:
+  - iocage-cell
+  - iocage-template
+
+
 - name: Enable zabbix_agentd service
   lineinfile: dest={{ template_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line={{ item.line }}
   with_items:

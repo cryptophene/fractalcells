@@ -40,7 +40,6 @@
   - { name: "tmux.conf", path: "/usr/local/etc/tmux.conf", mode: 644 }
   - { name: "zshrc", path: "/usr/local/etc/zshrc", mode: 644 }
   - { name: "devfs.rules", path: "/etc/devfs.rules", mode: 644 }
-  - { name: "FreeBSD.conf", path: "/etc/pkg/FreeBSD.conf", mode: 644 }
   tags:
   - comb-misc
   - pkg-server
@@ -59,12 +58,9 @@
   - { name: rsync  }
   - { name: zxfer  }
   - { name: iftop  }
-  - { name: postgresql94-client  }
   - { name: poudriere-devel }
   - { name: iocage-devel }
-  - { name: dialog4ports }
   - { name: curl }
-  - { name: portupgrade  }
   tags:
   - comb-misc
   - pkg-server

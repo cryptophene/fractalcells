@@ -40,22 +40,6 @@
   - gitlab
   - code
 
-- name: Remove freebsd.conf
-  file: path={{ gitlab_jail_dir.stat.path }}/etc/pkg/FreeBSD.conf state=absent
-  tags:
-  - gitlab
-  - code
-
-- name: Deploy pkg.fractalcells.com repo config
-  template: src='{{ item.name }}.j2' dest='{{ gitlab_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
-  with_items:
-  - { name: "fractalcells.conf", path: "/etc/pkg", mode: 644 }
-  when:
-  - "'uuid' in gitlab_jail and (gitlab_jail['uuid'] is defined and gitlab_jail['uuid'] != '-')"
-  tags:
-  - gitlab
-  - code
-
 - name: Install Gitlab
   when:
   - "'uuid' in gitlab_jail and (gitlab_jail['uuid'] is defined and gitlab_jail['uuid'] != '-')"

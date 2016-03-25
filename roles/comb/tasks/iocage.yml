@@ -43,8 +43,9 @@
   - iocage-comb
   - pkg-server
 
-- name: Fetch FreeBSD release {{ iocage_release_version }}
-  shell: echo "{{ iocage_release_version }}" | /usr/local/sbin/iocage fetch ftpfiles="base.txz src.txz"
+- name: Fetch {{ host_os }} release {{ iocage_release_version }}
+  shell: echo "{{ iocage_release_version }}" | /usr/local/sbin/iocage fetch ftpfiles="{{ iocage_ftp_files}}"  ftphost={{ iocage_ftp_host }} ftpdir={{ iocage_ftp_dir }}
+
   when: release_dir.stat.isdir is undefined
   tags:
   - iocage-comb

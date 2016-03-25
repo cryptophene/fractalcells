@@ -28,12 +28,6 @@
   - auth
   register: openldap_jail
 
-- name: Remove freebsd.conf
-  file: path={{ openldap_jail_dir.stat.path }}/etc/pkg/FreeBSD.conf state=absent
-  tags:
-  - ldap
-  - auth
-
 - name: Deploy pkg.fractalcells.com repo config
   template: src='{{ item.name }}.j2' dest='{{ openldap_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
   with_items:
