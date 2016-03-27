@@ -22,14 +22,14 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - name: Check if template jail already exists
-  iocage: state=exists tag='template_{{ iocage_release_version }}'
+  iocage: state=exists tag='{{ testing_jails.template.tag }}'
   register: template_jail
   tags:
   - iocage-template
   - iocage-cell
 
 - name: Create template jail
-  iocage: state=template tag='template_{{ iocage_release_version }}' release={{ iocage_release_version }} properties="pkglist='{{ iocage_jails_dir }}/pkglist.txt' ip4_addr='{{ testing_jails.template.interface }}|{{ testing_jails.template.ip }}' allow_sysvipc='1' resolver='nameserver {{ internal_ip }}'"
+  iocage: state=template tag='{{ testing_jails.template.tag }}' release={{ iocage_release_version }} properties="pkglist='{{ iocage_jails_dir }}/pkglist.txt' ip4_addr='{{ testing_jails.template.interface }}|{{ testing_jails.template.ip }}' allow_sysvipc='1' resolver='nameserver {{ internal_ip }}'"
   tags:
   - iocage-cell
   - iocage-template
@@ -38,71 +38,15 @@
   - "'uuid' in template_jail and (template_jail['uuid'] is not defined or template_jail['uuid'] == '-')" 
 
 - name: Check if template jail already exists
-  iocage: state=exists tag='template_{{ iocage_release_version }}'
+  iocage: state=exists tag='{{ testing_jails.template.tag }}'
   register: template_jail
   tags:
   - iocage-template
   - iocage-template-uuid
   - iocage-cell
-  - smtp
-  - pgsql
-  - ldap
-  - nginx_proxy
-  - nginx_internal
-  - redmine
-  - zabbix
-  - jenkins
-  - openvpn
-  - gitlab
 
-- assert:
-    that:
-     - template_jail is defined and template_jail.uuid != ""
-
-- name: Start template jail
-  iocage: state=started tag='template_{{ iocage_release_version }}' force=yes
-  tags:
-  - iocage-cell
-  - iocage-template
-  register: template_jail
-
-- assert:
-    that:
-      - template_jail|success
-
-- name: Check if template jail needs pkg bootstrap
-  stat: path=/iocage/templates/{{ template_jail.uuid }}/root/var/db/pkg/local.sqlite
-  register: template_jail_pkgdb
-  run_once: true
-  tags:
-  - iocage-cell
-  - iocage-template
-
-- name: Bootstrap pkg for template jail
-  iocage: state=exec uuid={{ template_jail.uuid }} cmd='/bin/sh -c "ASSUME_ALWAYS_YES=yes /usr/sbin/pkg bootstrap -f && /usr/local/sbin/pkg update -f"'
-  when:
-  - template_jail|success
-  #- template_jail_pkgdb is not defined
-  - not template_jail_pkgdb.stat.exists
-  run_once: true
-  tags:
-  - iocage-cell
-  - iocage-template
-
-# TODO: put checking sauce to see if that actually needs to be done.
-- name: Install all of the things
-  run_once: true
-  when:
-  - template_jail|success
-  #- template_jail_pkgdb is not defined
-  #- not template_jail_pkgdb.stat.exists
-  iocage: state=pkg tag={{ testing_jails.template.tag }}{{ iocage_release_version }} cmd="install -y {{ testing_jails.template.pkgs | join(' ') }}"
-  tags:
-  - iocage-cell
-  - iocage-template
-
-- name: Register jail's root diretory
-  stat: path='/iocage/templates/template_{{ iocage_release_version }}/root'
+- name: Register jail's root directory
+  stat: path='/iocage/templates/{{ testing_jails.template.tag }}/root'
   register: template_jail_dir
   tags:
   - iocage-cell
@@ -117,14 +61,22 @@
   - iocage-cell
   - iocage-template
 
-- name: Deploy config files for template
-  when:
-  - template_jail|success
-  template: src='{{ item.name }}.j2' dest='{{ template_jail_dir.stat.path }}{{ item.path }}/{{ item.name }}' mode={{ item.mode}} owner=root group=257
-  with_items:
-  - { name: "zabbix_agentd.conf", path: "/usr/local/etc/zabbix24", mode: 644 }
-  - { name: "hosts", path: "/etc", mode: 644 }
-  - { name: "syslog.conf", path: "/etc", mode: 644 }
+
+- name: Start template jail
+  iocage: state=started tag='{{ testing_jails.template.tag }}' force=yes
+  tags:
+  - iocage-cell
+  - iocage-template
+  register: template_jail
+
+- assert:
+    that:
+      - template_jail|success
+
+- name: Check if template jail needs pkg bootstrap
+  stat: path=/iocage/templates/{{ testing_jails.template.tag }}/root/var/db/pkg/local.sqlite
+  register: template_jail_pkgdb
+  run_once: true
   tags:
   - iocage-cell
   - iocage-template
@@ -149,6 +101,38 @@
   - iocage-cell
   - iocage-template
 
+- name: Bootstrap pkg for template jail
+  iocage: state=exec tag='{{ testing_jails.template.tag }}' cmd='/bin/sh -c "ASSUME_ALWAYS_YES=yes /usr/sbin/pkg bootstrap -f && /usr/local/sbin/pkg update -f"'
+  when:
+  - template_jail|success
+  #- template_jail_pkgdb is not defined
+  - not template_jail_pkgdb.stat.exists
+  run_once: true
+  tags:
+  - iocage-cell
+  - iocage-template
+
+# TODO: put checking sauce to see if that actually needs to be done.
+- name: Install all of the things
+  run_once: true
+  when:
+  - template_jail|success
+  iocage: state=pkg tag={{ testing_jails.template.tag  }} cmd="install -y {{ testing_jails.template.pkgs | join(' ') }}"
+  tags:
+  - iocage-cell
+  - iocage-template
+
+- name: Deploy config files for template
+  when:
+  - template_jail|success
+  template: src='{{ item.name }}.j2' dest='{{ template_jail_dir.stat.path }}{{ item.path }}/{{ item.name }}' mode={{ item.mode}} owner=root group=257
+  with_items:
+  - { name: "zabbix_agentd.conf", path: "/usr/local/etc/zabbix24", mode: 644 }
+  - { name: "hosts", path: "/etc", mode: 644 }
+  - { name: "syslog.conf", path: "/etc", mode: 644 }
+  tags:
+  - iocage-cell
+  - iocage-template
 
 - name: Enable zabbix_agentd service
   lineinfile: dest={{ template_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line={{ item.line }}
@@ -166,7 +150,7 @@
   tags:
   - iocage-cell
   - iocage-template
-  iocage: state=stopped tag={{ template_jail.uuid }}
+  iocage: state=stopped tag='{{ testing_jails.template.tag }}'
   when: template_jail|success
   register: template_jail
 

@@ -32,7 +32,7 @@
   - proxy
 
 - name: Create NGINX internal jail {{ production_jails.nginx_internal.tag }}
-  iocage: state=cloned clone_from='{{ template_jail.uuid }}' tag={{ production_jails.nginx_internal.tag }} properties="ip4_addr='{{ production_jails.nginx_internal.interface }}|{{ production_jails.nginx_internal.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
+  iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.nginx_internal.tag }} properties="ip4_addr='{{ production_jails.nginx_internal.interface }}|{{ production_jails.nginx_internal.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
   when:
   - "'uuid' in nginx_internal_jail and (nginx_internal_jail['uuid'] is not defined or nginx_internal_jail['uuid'] == '-')"
   tags:

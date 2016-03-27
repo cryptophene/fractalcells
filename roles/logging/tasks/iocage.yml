@@ -31,7 +31,7 @@
   - logs
 
 - name: Create logging jail {{ production_jails.logging.tag }}
-  iocage: state=cloned clone_from='{{ template_jail.uuid }}' tag={{ production_jails.logging.tag }} properties="ip4_addr='{{ production_jails.logging.interface }}|{{ production_jails.logging.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
+  iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.logging.tag }} properties="ip4_addr='{{ production_jails.logging.interface }}|{{ production_jails.logging.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
   when:
   - "'uuid' in logging_jail and (logging_jail['uuid'] is not defined or logging_jail['uuid'] == '-')"
   tags:

@@ -28,8 +28,9 @@ testing_jails:
     hostname:  'template'
     interface:      'lo1'
     ip:             '10.1.0.4'
-    tag:            'template_'
+    tag:            "template_{{ iocage_release_version|replace('.','') }}"
     pkgs:
+    - secadm
     - ca_root_nss
     - python27
     - sudo

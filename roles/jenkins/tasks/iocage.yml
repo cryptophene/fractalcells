@@ -31,7 +31,7 @@
   - automation
 
 - name: Create jenkins jail {{ production_jails.jenkins.tag }}
-  iocage: state=cloned clone_from='{{ template_jail.uuid }}' tag={{ production_jails.jenkins.tag }} properties="ip4_addr='{{ production_jails.jenkins.interface }}|{{ production_jails.jenkins.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
+  iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.jenkins.tag }} properties="ip4_addr='{{ production_jails.jenkins.interface }}|{{ production_jails.jenkins.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
   when:
   - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is not defined or jenkins_jail['uuid'] == '-')"
   tags:
