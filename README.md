@@ -12,10 +12,17 @@ This README is, for the time being, exclusively about the "How"
 You may want to use the following software, and know your way around them before evaluating
 `fractalcells || hosting singularity`:
 
-1. [FreeBSD](https://www.freebsd.org/)
+1. [HardenedBSD 10.3-RELENG](https://www.hardenedbsd.org/)
 1. One ZFS pool.
 1. [Ansible](https://www.ansible.com/)
 1. [ansible-iocage](https://github.com/fractalcells/ansible-iocage/)
+
+Additionally, we aim to provide `fractalcells || hosting singularity` for
+`FreeBSD`. This support, however, has limits: We require you use a version of
+`10.3-RELEASE` or later and do not guarantee feature-parity.
+
+For the best support, make sure you're running HardenedBSD builds from the
+`10.3-RELENG` or `11.0-CURRENT` branches.
 
 ## Howto
 
@@ -47,7 +54,7 @@ If not: we do offer paid support.
 
 ## Powered By
 
-1. [FreeBSD](https://www.freebsd.org)
+1. [HardenedBSD](https://www.hardenedbsd.org)
 1. [ansible](https://www.ansible.com)
 1. [iocage](https://github.com/pannon/iocage)
 1. [OpenSMTPD](https://www.opensmtpd.org)

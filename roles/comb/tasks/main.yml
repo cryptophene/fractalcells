@@ -30,3 +30,4 @@
  - include: fail2ban.yml
  - include: iocage.yml
  - include: unbound.yml
+ - include: secadm.yml

@@ -38,12 +38,6 @@
   - zabbix
   - monitoring
 
-- name: Remove freebsd.conf
-  file: path={{ zabbix_jail_dir.stat.path }}/etc/pkg/FreeBSD.conf state=absent
-  tags:
-  - zabbix
-  - monitoring
-
 - name: Deploy Zabbix repo config
   template: src='{{ item.name }}.j2' dest='{{ zabbix_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
   with_items:

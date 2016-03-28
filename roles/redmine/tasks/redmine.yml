@@ -38,12 +38,6 @@
   - redmine
   - issues
 
-- name: Remove freebsd.conf
-  file: path={{ redmine_jail_dir.stat.path }}/etc/pkg/FreeBSD.conf state=absent
-  tags:
-  - redmine
-  - issues
-
 - name: Deploy Redmine repo config
   template: src='{{ item.name }}.j2' dest='{{ redmine_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
   with_items:
@@ -94,6 +88,25 @@
   - { name: "authmethod_redmine.sql", path: "/root", mode: 644 }
   when:
   - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
+  tags:
+  - redmine
+  - issues
+
+- name: Deploy Redmine secadm config
+  template: src='{{ item.name }}.j2' dest='{{ redmine_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644 owner=818 group=818
+  with_items:
+  - { name: "secadm.rules", path: "/usr/local/etc", mode: 644 }
+  when:
+  - host_os == 'HardenedBSD'
+  tags:
+  - redmine
+  - issues
+
+- name: Load secadm rules
+  iocage: state=exec tag={{ redmine_jail.uuid }} cmd="/bin/sh -c \"secadm load /usr/local/etc/secadm.rules\""
+  when:
+  - redmine_jail | success
+  - host_os == 'HardenedBSD'
   tags:
   - redmine
   - issues

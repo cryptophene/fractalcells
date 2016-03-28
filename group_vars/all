@@ -4,7 +4,18 @@ iocage_dir:                     '/iocage'
 iocage_releases_dir:            '{{ iocage_dir }}/download'
 iocage_jails_dir:               '{{ iocage_dir }}/jails'
 iocage_zpool:                   'zroot'
-iocage_release_version:         '10.2-RELEASE'
+iocage_release_version:         '10.3-RELEASE'
+iocage_ftp_files:               'base.txz src.txz'
+
+iocage_ftp_host:                'jenkins.hardenedbsd.org'
+iocage_ftp_dir:                 '/builds/HardenedBSD-10.3-RELENG-amd64-LATEST/'
+# FIXME: NGINX->Passenger->Redmine does not yet work on HardenedBSD.
+# We'll fake being FreeBSD for the time being.
+#host_os:                        'HardenedBSD'
+
+#iocage_ftp_host:               'ftp.freebsd.org'
+#iocage_ftp_dir:                '/pub/FreeBSD/releases/amd64/10.3-RELEASE/'
+host_os:                        'FreeBSD'
 
 openssl:
   ciphers:  ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:!DHE-RSA-AES128-GCM-SHA256:!DHE-RSA-AES256-GCM-SHA384:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:!DHE-RSA-AES128-SHA256:!DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:!DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:!DHE-RSA-AES256-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!3DES:!MD5:!PSK
@@ -24,8 +35,9 @@ testing_jails:
     hostname:  'template'
     interface:      'lo1'
     ip:             '10.1.0.4'
-    tag:            'template_'
+    tag:            "template_{{ iocage_release_version|replace('.','') }}"
     pkgs:
+    - secadm
     - ca_root_nss
     - python27
     - sudo

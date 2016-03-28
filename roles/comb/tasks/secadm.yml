@@ -1,4 +1,4 @@
-# Copyright 2015, Perceivon Hosting Inc.
+# Copyright 2016, Perceivon Hosting Inc.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -21,49 +21,45 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
-- name: Check if zpool is configured for iocage
-  stat: path=/iocage/.default
-  register: zpool_activated
+- name: Install some packages
+  pkgng: name={{ item.name }} state=present
+  with_items:
+  - { name: secadm-kmod }
+  - { name: secadm }
   tags:
-  - iocage-comb
-  notify: check if iocage release was fetched
+  - secadm
+  - pkg-server
+- name: Check if secadm is already loaded
+  shell:  kldstat -q -m secadm
+  register: module_secadm_loaded
+  ignore_errors: yes
+  tags:
+  - secadm
+  - pkg-server
+#- name: debug pf_nat_loaded
+#  debug: var=pf_nat_loaded
+#  tags:
+#   - pf
 
-- name: Mark zpool for iocage usage
-  shell:  iocage activate {{ iocage_zpool }}
-  when: not zpool_activated.stat.exists
+- name: Load secadm
+  shell: kldload secadm
+  when:
+  - module_secadm_loaded|failed
+  - host_os == 'HardenedBSD'
   tags:
-  - iocage-comb
-
-- name: Check if we can skip downloading the release
-  stat: path='{{ iocage_releases_dir }}/{{ iocage_release_version }}'
-  register: release_dir
-  tags:
-  - iocage-comb
+  - secadm
   - pkg-server
 
-- name: Fetch {{ host_os }} release {{ iocage_release_version }}
-  shell: echo "{{ iocage_release_version }}" | /usr/local/sbin/iocage fetch ftpfiles="{{ iocage_ftp_files}}"  ftphost={{ iocage_ftp_host }} ftpdir={{ iocage_ftp_dir }}
-
-  when: release_dir.stat.isdir is undefined
+# FIXME: This is an incomprehensibly bad idea.
+- name: Make secadm opt-in
+  sysctl: name={{ item.name}} value={{ item.value }} state=present sysctl_set=yes
+  when:
+  - module_secadm_loaded|failed
+  ignore_errors: true
+  with_items:
+  - { name: 'hardening.pax.mprotect.status', value: 1 }
+  - { name: 'hardening.pax.aslr.status', value: 1 }
+  - { name: 'hardening.pax.pageexec.status', value: 1 }
   tags:
-  - iocage-comb
+  - secadm
   - pkg-server
-
-- name: Check if it is now present
-  stat: path='{{ iocage_releases_dir }}/{{ iocage_release_version }}'
-  when: release_dir.stat.isdir is undefined
-  tags:
-    - iocage-comb
-  register: release_dir
-
-- name: Create pkglist file
-  tags:
-  - iocage-comb
-  copy: src=pkglist.txt dest='{{ iocage_jails_dir }}/pkglist.txt'
-
-- name: Enable iocage service
-  tags:
-  - iocage-comb
-  service:
-    name: iocage
-    enabled: true

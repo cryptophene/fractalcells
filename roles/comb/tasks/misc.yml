@@ -1,4 +1,5 @@
-# Copyright 2015, Perceivon Hosting Inc.  #
+# Copyright 2015, Perceivon Hosting Inc.
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
@@ -34,14 +35,35 @@
   - comb-misc
   - pkg-server
 
+- name: Remove {{ host_os }}.conf
+  file: path=/etc/pkg/{{ host_os }}.conf state=absent
+  tags:
+  - comb-misc
+
+- name: Remove FreeBSD.conf
+  file: path=/etc/pkg/FreeBSD.conf state=absent
+  tags:
+  - comb-misc
+
+- name: Deploy pkg.fractalcells.com repo config
+  template: src=fractalcells.conf.j2 dest=/etc/pkg/fractalcells.conf mode=0644
+  tags:
+  - comb-misc
+
 - name: Install helpful default config files
   copy: src="{{ item.name }}" dest="{{ item.path }}" mode="{{ item.mode }}"
   with_items:
   - { name: "tmux.conf", path: "/usr/local/etc/tmux.conf", mode: 644 }
   - { name: "zshrc", path: "/usr/local/etc/zshrc", mode: 644 }
   - { name: "devfs.rules", path: "/etc/devfs.rules", mode: 644 }
-  - { name: "FreeBSD.conf", path: "/etc/pkg/FreeBSD.conf", mode: 644 }
   tags:
+  - comb-misc
+  - pkg-server
+
+- name: Install fractalcells MOTD
+  copy: src="motd" dest="/etc/motd" mode="444"
+  tags:
+  - branding
   - comb-misc
   - pkg-server
 
@@ -49,8 +71,8 @@
   pkgng: name={{ item.name }} state=present
   with_items:
   - { name: zsh }
-  - { name: zsh }
   - { name: tmux }
+  - { name: secadm-kmod }
   - { name: python27 }
   - { name: py27-keyczar  }
   - { name: py27-pycrypto  }
@@ -59,19 +81,9 @@
   - { name: rsync  }
   - { name: zxfer  }
   - { name: iftop  }
-  - { name: postgresql94-client  }
-  - { name: poudriere-devel }
   - { name: iocage-devel }
-  - { name: dialog4ports }
   - { name: curl }
-  - { name: portupgrade  }
   tags:
   - comb-misc
   - pkg-server
   - fail2ban
-
-- name: Create distfiles dir
-  file: path=/usr/ports/distfiles state=directory mode=0755
-  tags:
-  - comb-misc
-  - pkg-server

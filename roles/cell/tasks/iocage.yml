@@ -22,14 +22,14 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - name: Check if template jail already exists
-  iocage: state=exists tag='template_{{ iocage_release_version }}'
+  iocage: state=exists tag='{{ testing_jails.template.tag }}'
   register: template_jail
   tags:
   - iocage-template
   - iocage-cell
 
 - name: Create template jail
-  iocage: state=template tag='template_{{ iocage_release_version }}' release={{ iocage_release_version }} properties="pkglist='{{ iocage_jails_dir }}/pkglist.txt' ip4_addr='{{ testing_jails.template.interface }}|{{ testing_jails.template.ip }}' allow_sysvipc='1' resolver='nameserver {{ internal_ip }}'"
+  iocage: state=template tag='{{ testing_jails.template.tag }}' release={{ iocage_release_version }} properties="pkglist='{{ iocage_jails_dir }}/pkglist.txt' ip4_addr='{{ testing_jails.template.interface }}|{{ testing_jails.template.ip }}' allow_sysvipc='1' resolver='nameserver {{ internal_ip }}'"
   tags:
   - iocage-cell
   - iocage-template
@@ -38,29 +38,39 @@
   - "'uuid' in template_jail and (template_jail['uuid'] is not defined or template_jail['uuid'] == '-')" 
 
 - name: Check if template jail already exists
-  iocage: state=exists tag='template_{{ iocage_release_version }}'
+  iocage: state=exists tag='{{ testing_jails.template.tag }}'
   register: template_jail
   tags:
   - iocage-template
   - iocage-template-uuid
   - iocage-cell
-  - smtp
-  - pgsql
-  - ldap
-  - nginx_proxy
-  - nginx_internal
-  - redmine
-  - zabbix
-  - jenkins
-  - openvpn
-  - gitlab
+
+- name: Register jail's root directory
+  stat: path='/iocage/templates/{{ testing_jails.template.tag }}/root'
+  register: template_jail_dir
+  tags:
+  - branding
+  - iocage-cell
+  - iocage-template
 
 - assert:
     that:
-     - template_jail is defined and template_jail.uuid != ""
+      - template_jail_dir is defined
+      - template_jail_dir.stat.exists
+      - template_jail_dir.stat.isdir
+  tags:
+  - iocage-cell
+  - iocage-template
+
+- name: Install fractalcells MOTD into template jail
+  copy: src="motd" dest="{{ template_jail_dir.stat.path }}/etc/motd" mode="444"
+  tags:
+  - branding
+  - iocage-cell
+  - iocage-template
 
 - name: Start template jail
-  iocage: state=started tag='template_{{ iocage_release_version }}' force=yes
+  iocage: state=started tag='{{ testing_jails.template.tag }}' force=yes
   tags:
   - iocage-cell
   - iocage-template
@@ -71,15 +81,35 @@
       - template_jail|success
 
 - name: Check if template jail needs pkg bootstrap
-  stat: path=/iocage/templates/{{ template_jail.uuid }}/root/var/db/pkg/local.sqlite
+  stat: path=/iocage/templates/{{ testing_jails.template.tag }}/root/var/db/pkg/local.sqlite
   register: template_jail_pkgdb
   run_once: true
   tags:
   - iocage-cell
   - iocage-template
 
+- name: Remove {{ host_os }}.conf
+  file: path={{ template_jail_dir.stat.path }}/etc/pkg/{{ host_os }}.conf state=absent
+  tags:
+  - iocage-cell
+  - iocage-template
+
+- name: Remove FreeBSD.conf
+  file: path={{ template_jail_dir.stat.path }}/etc/pkg/FreeBSD.conf state=absent
+  tags:
+  - iocage-cell
+  - iocage-template
+
+- name: Deploy pkg.fractalcells.com repo config
+  template: src='{{ item.name }}.j2' dest='{{ template_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
+  with_items:
+  - { name: "fractalcells.conf", path: "/etc/pkg", mode: 644 }
+  tags:
+  - iocage-cell
+  - iocage-template
+
 - name: Bootstrap pkg for template jail
-  iocage: state=exec uuid={{ template_jail.uuid }} cmd='/bin/sh -c "ASSUME_ALWAYS_YES=yes /usr/sbin/pkg bootstrap -f && /usr/local/sbin/pkg update -f"'
+  iocage: state=exec tag='{{ testing_jails.template.tag }}' cmd='/bin/sh -c "ASSUME_ALWAYS_YES=yes /usr/sbin/pkg bootstrap -f && /usr/local/sbin/pkg update -f"'
   when:
   - template_jail|success
   #- template_jail_pkgdb is not defined
@@ -94,25 +124,7 @@
   run_once: true
   when:
   - template_jail|success
-  #- template_jail_pkgdb is not defined
-  #- not template_jail_pkgdb.stat.exists
-  iocage: state=pkg tag={{ testing_jails.template.tag }}{{ iocage_release_version }} cmd="install -y {{ testing_jails.template.pkgs | join(' ') }}"
-  tags:
-  - iocage-cell
-  - iocage-template
-
-- name: Register jail's root diretory
-  stat: path='/iocage/templates/template_{{ iocage_release_version }}/root'
-  register: template_jail_dir
-  tags:
-  - iocage-cell
-  - iocage-template
-
-- assert:
-    that:
-      - template_jail_dir is defined
-      - template_jail_dir.stat.exists
-      - template_jail_dir.stat.isdir
+  iocage: state=pkg tag={{ testing_jails.template.tag  }} cmd="install -y {{ testing_jails.template.pkgs | join(' ') }}"
   tags:
   - iocage-cell
   - iocage-template
@@ -142,10 +154,10 @@
   - iocage-template
 
 - name: Stop template jail
+  iocage: state=stopped tag='{{ testing_jails.template.tag }}'
   tags:
   - iocage-cell
   - iocage-template
-  iocage: state=stopped tag={{ template_jail.uuid }}
   when: template_jail|success
   register: template_jail
 

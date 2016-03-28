@@ -31,7 +31,7 @@
   - vpn
 
 - name: Create openvpn jail {{ production_jails.openvpn.tag }}
-  iocage: state=cloned clone_from='{{ template_jail.uuid }}' tag={{ production_jails.openvpn.tag }} properties="ip4_addr='{{ production_jails.openvpn.interface }}|{{ production_jails.openvpn.ip }},{{ openvpn.interface }}|{{ openvpn.ifconfig }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' exec_poststart='/sbin/route add -net {{ openvpn.subnet }} {{ openvpn.internal_ip }}' allow_raw_sockets=1 devfs_ruleset=6"
+  iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.openvpn.tag }} properties="ip4_addr='{{ production_jails.openvpn.interface }}|{{ production_jails.openvpn.ip }},{{ openvpn.interface }}|{{ openvpn.ifconfig }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' exec_poststart='/sbin/route add -net {{ openvpn.subnet }} {{ openvpn.internal_ip }}' allow_raw_sockets=1 devfs_ruleset=6 host_hostname='{{ production_jails.openvpn.tag }}'"
   when:
   - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is not defined or openvpn_jail['uuid'] == '-')"
   tags:

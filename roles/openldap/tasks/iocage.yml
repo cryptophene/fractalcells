@@ -31,7 +31,7 @@
   - auth
 
 - name: Create OpenLDAP jail {{ production_jails.openldap.tag }}
-  iocage: state=cloned clone_from='{{ template_jail.uuid }}' tag={{ production_jails.openldap.tag }} properties="ip4_addr='{{ production_jails.openldap.interface }}|{{ production_jails.openldap.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
+  iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.openldap.tag }} properties="ip4_addr='{{ production_jails.openldap.interface }}|{{ production_jails.openldap.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.openldap.tag }}'"
   when:
   - "'uuid' in openldap_jail and (openldap_jail['uuid'] is not defined or openldap_jail['uuid'] == '-')"
   tags:
