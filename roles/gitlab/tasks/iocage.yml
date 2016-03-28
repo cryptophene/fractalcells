@@ -31,7 +31,7 @@
   - code
 
 - name: Create gitlab jail {{ production_jails.gitlab.tag }}
-  iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.gitlab.tag }} properties="ip4_addr='{{ production_jails.gitlab.interface }}|{{ production_jails.gitlab.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
+  iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.gitlab.tag }} properties="ip4_addr='{{ production_jails.gitlab.interface }}|{{ production_jails.gitlab.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.gitlab.tag }}'"
   when:
   - "'uuid' in gitlab_jail and (gitlab_jail['uuid'] is not defined or gitlab_jail['uuid'] == '-')"
   tags:

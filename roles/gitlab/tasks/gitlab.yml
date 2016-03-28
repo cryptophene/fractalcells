@@ -79,7 +79,25 @@
   - { name: "unicorn.rb", path: "/usr/local/www/gitlab/config", mode: 644 }
   - { name: "authmethod_gitlab.sql", path: "/root", mode: 644 }
   - { name: "nginx.conf", path: "/usr/local/etc/nginx", mode: 644 }
+  tags:
+  - gitlab
+  - code
+
+- name: Deploy Gitlab secadm config
+  template: src='{{ item.name }}.j2' dest='{{ gitlab_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
+  with_items:
   - { name: "secadm.rules", path: "/usr/local/etc", mode: 644 }
+  when:
+  - host_os == 'HardenedBSD'
+  tags:
+  - gitlab
+  - code
+
+- name: Load secadm rules
+  iocage: state=exec tag={{ gitlab_jail.uuid }} cmd="/bin/sh -c \"secadm load /usr/local/etc/secadm.rules\""
+  when:
+  - gitlab_jail | success
+  - host_os == 'HardenedBSD'
   tags:
   - gitlab
   - code
@@ -87,7 +105,6 @@
 - name: Start Gitlab nginx & redis
   iocage: state=exec tag={{ gitlab_jail.uuid }} cmd="/bin/sh -c \"{{ item.cmd }}\""
   with_items:
-  - { cmd: "secadm load /usr/local/etc/secadm.rules" }
   - { cmd: "service nginx restart" }
   - { cmd: "service redis restart" }
   when:
@@ -102,6 +119,7 @@
   tags:
   - gitlab
   - code
+
 - name: Execute stuff
   iocage: state=exec tag={{ gitlab_jail.uuid }} user=root cmd="/bin/sh -c \"{{ item.cmd }}\""
   with_items:

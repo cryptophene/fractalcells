@@ -11,6 +11,12 @@
     register: pkg
     ignore_errors: True
 
+  - name: Remove repo configs
+    raw: /bin/rm -f /etc/pkg/FreeBSD.conf /etc/pkg/HardenedBSD.conf
+
+  - name: Add Fractalcells config
+    raw: '/bin/sh -c "/bin/echo fractalcells: { url: http://pkg.fractalcells.com/packages/FreeBSD:10:amd64/, enabled: true, priority: 10 } > /etc/pkg/fractalcells.conf"'
+
   - name: Bootstrap pkg tool
     raw: /usr/bin/env ASSUME_ALWAYS_YES=1 /usr/sbin/pkg bootstrap -f
     when: pkg|failed

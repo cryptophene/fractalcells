@@ -49,6 +49,7 @@
   stat: path='/iocage/templates/{{ testing_jails.template.tag }}/root'
   register: template_jail_dir
   tags:
+  - branding
   - iocage-cell
   - iocage-template
 
@@ -61,6 +62,12 @@
   - iocage-cell
   - iocage-template
 
+- name: Install fractalcells MOTD into template jail
+  copy: src="motd" dest="{{ template_jail_dir.stat.path }}/etc/motd" mode="444"
+  tags:
+  - branding
+  - iocage-cell
+  - iocage-template
 
 - name: Start template jail
   iocage: state=started tag='{{ testing_jails.template.tag }}' force=yes
@@ -147,10 +154,10 @@
   - iocage-template
 
 - name: Stop template jail
+  iocage: state=stopped tag='{{ testing_jails.template.tag }}'
   tags:
   - iocage-cell
   - iocage-template
-  iocage: state=stopped tag='{{ testing_jails.template.tag }}'
   when: template_jail|success
   register: template_jail
 

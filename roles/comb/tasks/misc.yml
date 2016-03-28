@@ -60,6 +60,13 @@
   - comb-misc
   - pkg-server
 
+- name: Install fractalcells MOTD
+  copy: src="motd" dest="/etc/motd" mode="444"
+  tags:
+  - branding
+  - comb-misc
+  - pkg-server
+
 - name: Install some packages
   pkgng: name={{ item.name }} state=present
   with_items:

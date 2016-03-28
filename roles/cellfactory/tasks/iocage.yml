@@ -44,7 +44,7 @@
 #  - cellfactory
 
 - name: Create jail {{ production_jails.nginx_proxy.tag }}
-  iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ item.value.tag }} properties="ip4_addr='{{ item.value.interface }}|{{ item.value.ip }}' boot=on allow_sysvipc=0 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
+  iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ item.value.tag }} properties="ip4_addr='{{ item.value.interface }}|{{ item.value.ip }}' boot=on allow_sysvipc=0 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ item.value.tag }}'"
   when:
   - "'uuid' in  item  and (item['uuid'] is not defined or item['uuid'] == '-')"
   with_items: "{{ production_jail_uuids.results }}"

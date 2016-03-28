@@ -21,23 +21,45 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
+- name: Install some packages
+  pkgng: name={{ item.name }} state=present
+  with_items:
+  - { name: secadm-kmod }
+  - { name: secadm }
+  tags:
+  - secadm
+  - pkg-server
 - name: Check if secadm is already loaded
-  shell:  kldstat -q -m pf
-  register: module_pf_loaded
+  shell:  kldstat -q -m secadm
+  register: module_secadm_loaded
   ignore_errors: yes
   tags:
-  - pf
+  - secadm
   - pkg-server
 #- name: debug pf_nat_loaded
 #  debug: var=pf_nat_loaded
 #  tags:
 #   - pf
 
-- name: Load pf
-  shell: kldload pf
-  when: module_pf_loaded|failed
+- name: Load secadm
+  shell: kldload secadm
+  when:
+  - module_secadm_loaded|failed
+  - host_os == 'HardenedBSD'
   tags:
-  - pf
+  - secadm
   - pkg-server
-  notify: restart pf
 
+# FIXME: This is an incomprehensibly bad idea.
+- name: Make secadm opt-in
+  sysctl: name={{ item.name}} value={{ item.value }} state=present sysctl_set=yes
+  when:
+  - module_secadm_loaded|failed
+  ignore_errors: true
+  with_items:
+  - { name: 'hardening.pax.mprotect.status', value: 1 }
+  - { name: 'hardening.pax.aslr.status', value: 1 }
+  - { name: 'hardening.pax.pageexec.status', value: 1 }
+  tags:
+  - secadm
+  - pkg-server

@@ -31,7 +31,7 @@
   - monitoring
 
 - name: Create zabbix jail {{ production_jails.zabbix.tag }}
-  iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.zabbix.tag }} properties="ip4_addr='{{ production_jails.zabbix.interface }}|{{ production_jails.zabbix.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}'"
+  iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.zabbix.tag }} properties="ip4_addr='{{ production_jails.zabbix.interface }}|{{ production_jails.zabbix.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.zabbix.tag }}'"
   when:
   - "'uuid' in zabbix_jail and (zabbix_jail['uuid'] is not defined or zabbix_jail['uuid'] == '-')"
   tags:

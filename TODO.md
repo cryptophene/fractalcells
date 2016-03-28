@@ -4,7 +4,8 @@ BUGS:
 - too many FIXMEs/TODOs/XXXs remaining
 - security settings could in parts be different
 - missing secadm rules for redmine
-- sshd not yet setup in gitlab jail, portforward or use chroot?
+- sshd not yet setup in gitlab jail, use portforward
+- zabbix server assigns Linux templates to FreeBSD hosts ...
 - cert signing could be redone
 
 
@@ -30,5 +31,3 @@ MISC:
 LOW-PRIORITY:
 - integrate design across zabbix/redmine/jenkins/phpldapadmin/phppgadmin
 - make fc ipv6 ready -- show-stopper: missing af-to
-- make zabbix uids in jails dynamic within some range
-  (host\_hostuuid? hostname? iocage var)

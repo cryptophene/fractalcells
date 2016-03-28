@@ -8,6 +8,7 @@ editors/vim-lite
 lang/php56
 net/phpldapadmin
 lang/python27
+lang/python
 mail/opensmtpd
 net/rsync
 net/openldap24-client

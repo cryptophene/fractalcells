@@ -92,6 +92,25 @@
   - redmine
   - issues
 
+- name: Deploy Redmine secadm config
+  template: src='{{ item.name }}.j2' dest='{{ redmine_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644 owner=818 group=818
+  with_items:
+  - { name: "secadm.rules", path: "/usr/local/etc", mode: 644 }
+  when:
+  - host_os == 'HardenedBSD'
+  tags:
+  - redmine
+  - issues
+
+- name: Load secadm rules
+  iocage: state=exec tag={{ redmine_jail.uuid }} cmd="/bin/sh -c \"secadm load /usr/local/etc/secadm.rules\""
+  when:
+  - redmine_jail | success
+  - host_os == 'HardenedBSD'
+  tags:
+  - redmine
+  - issues
+
 - name: Start Redmine nginx
   iocage: state=exec tag={{ redmine_jail.uuid }} cmd="/bin/sh -c \"service nginx restart\""
   when:

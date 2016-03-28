@@ -52,6 +52,8 @@
   template: src='{{ item.name }}.j2' dest='{{ jenkins_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644 owner=818 group=818
   with_items:
   - { name: "secadm.rules", path: "/usr/local/etc", mode: 644 }
+  when:
+  - host_os == 'HardenedBSD'
   tags:
   - jenkins
   - ci
@@ -60,6 +62,7 @@
   iocage: state=exec tag={{ jenkins_jail.uuid }} cmd="/bin/sh -c \"secadm load /usr/local/etc/secadm.rules\""
   when:
   - jenkins_jail | success
+  - host_os == 'HardenedBSD'
   tags:
   - jenkins
   - ci
