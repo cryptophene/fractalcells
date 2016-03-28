@@ -14,7 +14,7 @@ iocage_ftp_dir:                 '/builds/HardenedBSD-10.3-RELENG-amd64-LATEST/'
 #host_os:                        'HardenedBSD'
 
 #iocage_ftp_host:               'ftp.freebsd.org'
-#iocage_ftp_dir:                '/pub/FreeBSD/releases/amd64/10.2-RELEASE/'
+#iocage_ftp_dir:                '/pub/FreeBSD/releases/amd64/10.3-RELEASE/'
 host_os:                        'FreeBSD'
 
 openssl:
