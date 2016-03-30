@@ -1,0 +1,44 @@
+# Bootstraps a stock FreeBSD installation for use with Ansible.
+# Expects ssh to work, and your user to be in the wheel group.
+---
+- hosts: all
+  gather_facts: no
+  tasks:
+  - name: Check if pkg(8) needs bootstrapping
+    raw: /usr/sbin/pkg -N
+    register: pkg
+    ignore_errors: True
+
+  - name: Remove repo configs
+    raw: /bin/rm -f /etc/pkg/FreeBSD.conf /etc/pkg/HardenedBSD.conf
+
+  - name: Add Fractalcells config
+    raw: '/bin/sh -c "/bin/echo fractalcells: { url: http://pkg.fractalcells.com/packages/FreeBSD:10:amd64/, enabled: true, priority: 10 } > /etc/pkg/fractalcells.conf"'
+
+  - name: Bootstrap pkg tool
+    raw: /usr/bin/env ASSUME_ALWAYS_YES=1 /usr/sbin/pkg bootstrap -f
+    when: pkg|failed
+
+  - name: Install python and sudo so that ansible can run in non-raw mode
+    raw: /usr/sbin/pkg install -y python27 python sudo
+  
+  - name: Deploy rudimentary sudoers file.
+    script: "/bin/echo %wheel ALL=\\(ALL\\) ALL > /usr/local/etc/sudoers.d/fractalcells"
+
+- hosts: all
+  tasks:
+
+  - name: Install management tools
+    pkgng:
+      name: "{{ item }}"
+      state: present
+    with_items:
+    - tmux
+    - vim-lite
+
+  - name: allow wheel to sudo - the proper way
+    copy:
+      content: "# fractalcells managed\n%wheel ALL=(ALL) ALL"
+      dest: /usr/local/etc/sudoers.d/fractalcells
+      mode: 0440
+      validate: 'visudo -cf %s'

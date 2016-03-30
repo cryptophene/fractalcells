@@ -1,0 +1,4 @@
+[default]
+/mnt	ansible_connection=chroot
+[fractalcells]
+/mnt	ansible_connection=chroot
