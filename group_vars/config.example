@@ -1,22 +1,22 @@
-external_domain:          'fc.acme.com'
+external_domain:          'your.company.tld'
 
 config:
   host:
     sshd_port:           '22'
   openldap:
-    server_name:         'Acme Corporation Directory Server'
-    manager_password:    'pinky_is_awesome'
+    server_name:         '<your company> Directory Server'
+    manager_password:    'furthers3cret'
   smtpd:
-    user:                 'pinky'
-    password:             'so_aweosme'
-    email:                'chris@acme.com'
+    user:                 'charlie_root'
+    password:             'omgsecret'
+    email:                'charlie_root@gmail.com'
     relay:
-      hostname:           'smtp-c.acme.com'
+      hostname:           'mx.your.domain.tld'
       port:               587
   zabbix:
-    password:             '1234'
+    password:             'so1ncrediblysecr1t'
   gitlab:
-    secrets:              '9876'
-    root_password:        'password'
+    secrets:              '1234'
+    root_password:        'root_secr1t'
   openvpn:
     dhparam_strength: 1024

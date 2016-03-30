@@ -1,4 +1,3 @@
----
 certificate_authority:
   certificate_directory:                /usr/local/share/certs
   short_name:                           'foobar'
@@ -15,7 +14,7 @@ certificate_authority:
     email_address:                      'ca@your.company.tld'
     challenge_password:                 'notlesssecr1t'
   proxy:
-    common_name:                        '{{ external_domain }}'
+    common_name:                        'your.company.tld'
     organizational_unit:                '<your company>'
     default_bits:                       4096
     output_password:                    'still_secr1t'
@@ -24,5 +23,5 @@ certificate_authority:
   country:                              'US'
   state:                                'CA'
   locality:                             'Palo Alto'
-  organization:                         'your company'
-  organizational_unit:                  'your company Certificate Authority'
+  organization:                         '<your company>'
+  organizational_unit:                  '<your company> Certificate Authority'
