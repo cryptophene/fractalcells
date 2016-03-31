@@ -23,6 +23,7 @@
 ---
 - name: Check if logging jail already exists
   iocage: state=exists tag='{{ production_jails.logging.tag }}'
+  ignore_errors: true
   register: logging_jail
   tags:
   - iocage-logging
@@ -33,26 +34,15 @@
 - name: Create logging jail {{ production_jails.logging.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.logging.tag }} properties="ip4_addr='{{ production_jails.logging.interface }}|{{ production_jails.logging.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.logging.tag }}'"
   when:
-  - "'uuid' in logging_jail and (logging_jail['uuid'] is not defined or logging_jail['uuid'] == '-')"
+  - logging_jail|failed
   tags:
   - iocage-logging
   - iocage-jails
-  - logging
-  - logs
-
-- name: Find UUID for {{ production_jails.logging.tag  }}
-  iocage: state=exists tag='{{ production_jails.logging.tag }}'
-  changed_when: false
-  register: logging_jail
-  tags:
-  - iocage-logging
-  - iocage-jails
-  - logging-debug
   - logging
   - logs
 
 - name: Register jail's root diretory
-  stat: path='/iocage/jails/{{ logging_jail.uuid }}/root/'
+  stat: path='/iocage/tags/{{ production_jails.logging.tag }}/root/'
   register: logging_jail_dir
   tags:
   - iocage-logging

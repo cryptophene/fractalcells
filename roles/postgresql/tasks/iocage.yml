@@ -23,6 +23,7 @@
 ---
 - name: Check if Postgresql jail already exists
   iocage: state=exists tag='{{ production_jails.postgresql.tag }}'
+  ignore_errors: true
   register: postgresql_jail
   tags:
   - iocage-jails
@@ -33,17 +34,7 @@
 - name: Create PostgreSQL jail {{ production_jails.postgresql.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.postgresql.tag }} properties="ip4_addr='{{ production_jails.postgresql.interface }}|{{ production_jails.postgresql.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.postgresql.tag }}'"
   when:
-  - "'uuid' in postgresql_jail and (postgresql_jail['uuid'] is not defined or postgresql_jail['uuid'] == '-')"
-  register: postgresql_jail
-  tags:
-  - iocage-jails
-  - iocage-postgresql
-  - pgsql
-  - db
-
-- name: Find UUID for {{ production_jails.postgresql.hostname  }}
-  iocage: state=exists tag='{{ production_jails.postgresql.tag }}'
-  changed_when: false
+  - postgresql_jail|failed
   register: postgresql_jail
   tags:
   - iocage-jails
@@ -52,7 +43,7 @@
   - db
 
 - name: Register jail's root diretory
-  stat: path=/iocage/jails/{{ postgresql_jail.uuid }}/root/
+  stat: path=/iocage/tags/{{ production_jails.postgresql.tag }}/root/
   register: postgresql_jail_dir
   tags:
   - iocage-jails

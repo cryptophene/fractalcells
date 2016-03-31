@@ -24,6 +24,7 @@
 - name: Check if openvpn jail already exists
   iocage: state=exists tag='{{ production_jails.openvpn.tag }}'
   register: openvpn_jail
+  ignore_errors: true
   tags:
   - iocage-openvpn
   - iocage-jails
@@ -33,17 +34,7 @@
 - name: Create openvpn jail {{ production_jails.openvpn.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.openvpn.tag }} properties="ip4_addr='{{ production_jails.openvpn.interface }}|{{ production_jails.openvpn.ip }},{{ openvpn.interface }}|{{ openvpn.ifconfig }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' exec_poststart='/sbin/route add -net {{ openvpn.subnet }} {{ openvpn.internal_ip }}' allow_raw_sockets=1 devfs_ruleset=6 host_hostname='{{ production_jails.openvpn.tag }}'"
   when:
-  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is not defined or openvpn_jail['uuid'] == '-')"
-  tags:
-  - iocage-openvpn
-  - iocage-jails
-  - openvpn
-  - vpn
-
-- name: Find UUID for {{ production_jails.openvpn.tag  }}
-  iocage: state=exists tag='{{ production_jails.openvpn.tag }}'
-  changed_when: false
-  register: openvpn_jail
+  - openvpn_jail|failed
   tags:
   - iocage-openvpn
   - iocage-jails
@@ -51,7 +42,7 @@
   - vpn
 
 - name: Register jail's root diretory
-  stat: path='/iocage/jails/{{ openvpn_jail.uuid }}/root/'
+  stat: path='/iocage/tags/{{ production_jails.openvpn.tag }}/root/'
   register: openvpn_jail_dir
   tags:
   - iocage-openvpn

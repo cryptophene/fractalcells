@@ -24,6 +24,7 @@
 - name: Check if redmine jail already exists
   iocage: state=exists tag='{{ production_jails.redmine.tag }}'
   register: redmine_jail
+  ignore_errors: true
   tags:
   - iocage-redmine
   - iocage-jails
@@ -33,17 +34,7 @@
 - name: Create redmine jail {{ production_jails.redmine.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.redmine.tag }} properties="ip4_addr='{{ production_jails.redmine.interface }}|{{ production_jails.redmine.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.redmine.tag }}'"
   when:
-  - "'uuid' in redmine_jail and (redmine_jail['uuid'] is not defined or redmine_jail['uuid'] == '-')"
-  tags:
-  - iocage-redmine
-  - iocage-jails
-  - redmine
-  - issues
-
-- name: Find UUID for {{ production_jails.redmine.tag  }}
-  iocage: state=exists tag='{{ production_jails.redmine.tag }}'
-  changed_when: false
-  register: redmine_jail
+  - redmine_jail|failed
   tags:
   - iocage-redmine
   - iocage-jails
@@ -51,7 +42,7 @@
   - issues
 
 - name: Register jail's root diretory
-  stat: path='/iocage/jails/{{ redmine_jail.uuid }}/root/'
+  stat: path='/iocage/tags/{{ production_jails.redmine.tag }}/root/'
   register: redmine_jail_dir
   tags:
   - iocage-redmine

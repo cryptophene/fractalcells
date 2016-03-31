@@ -24,6 +24,7 @@
 - name: Check if OpenLDAP jail already exists
   iocage: state=exists tag='{{ production_jails.openldap.tag }}'
   register: openldap_jail
+  ignore_errors: true
   tags:
   - iocage-openldap
   - iocage-jails
@@ -33,26 +34,15 @@
 - name: Create OpenLDAP jail {{ production_jails.openldap.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.openldap.tag }} properties="ip4_addr='{{ production_jails.openldap.interface }}|{{ production_jails.openldap.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.openldap.tag }}'"
   when:
-  - "'uuid' in openldap_jail and (openldap_jail['uuid'] is not defined or openldap_jail['uuid'] == '-')"
+  - openldap_jail|failed
   tags:
   - iocage-openldap
   - iocage-jails
   - ldap
-  - auth
-
-- name: Find UUID for {{ production_jails.openldap.tag  }}
-  iocage: state=exists tag='{{ production_jails.openldap.tag }}'
-  changed_when: false
-  register: openldap_jail
-  tags:
-  - iocage-openldap
-  - iocage-jails
-  - ldap
-  - ldap-debug
   - auth
 
 - name: Register jail's root diretory
-  stat: path='/iocage/jails/{{ openldap_jail.uuid }}/root/'
+  stat: path='/iocage/tags/{{ production_jails.openldap.tag }}/root/'
   register: openldap_jail_dir
   tags:
   - iocage-openldap

@@ -23,6 +23,7 @@
 ---
 - name: Check if zabbix jail already exists
   iocage: state=exists tag='{{ production_jails.zabbix.tag }}'
+  ignore_errors: true
   register: zabbix_jail
   tags:
   - iocage-zabbix
@@ -33,17 +34,7 @@
 - name: Create zabbix jail {{ production_jails.zabbix.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.zabbix.tag }} properties="ip4_addr='{{ production_jails.zabbix.interface }}|{{ production_jails.zabbix.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.zabbix.tag }}'"
   when:
-  - "'uuid' in zabbix_jail and (zabbix_jail['uuid'] is not defined or zabbix_jail['uuid'] == '-')"
-  tags:
-  - iocage-zabbix
-  - iocage-jails
-  - zabbix
-  - monitoring
-
-- name: Find UUID for {{ production_jails.zabbix.tag  }}
-  iocage: state=exists tag='{{ production_jails.zabbix.tag }}'
-  changed_when: false
-  register: zabbix_jail
+  - zabbix_jail|failed
   tags:
   - iocage-zabbix
   - iocage-jails
@@ -51,7 +42,7 @@
   - monitoring
 
 - name: Register jail's root diretory
-  stat: path='/iocage/jails/{{ zabbix_jail.uuid }}/root/'
+  stat: path='/iocage/tags/{{ production_jails.zabbix.tag }}/root/'
   register: zabbix_jail_dir
   tags:
   - iocage-zabbix

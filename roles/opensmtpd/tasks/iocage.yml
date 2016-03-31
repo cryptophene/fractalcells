@@ -24,6 +24,7 @@
 - name: Check if OpenSMTPD jail already exists
   iocage: state=exists tag='{{ production_jails.opensmtpd.tag }}'
   register: opensmtpd_jail
+  ignore_errors: true
   tags:
   - iocage-jails
   - iocage-opensmtpd
@@ -33,17 +34,7 @@
 - name: Create OpenSMTPD jail {{ production_jails.opensmtpd.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.opensmtpd.tag }} properties="ip4_addr='{{ production_jails.opensmtpd.interface }}|{{ production_jails.opensmtpd.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.opensmtpd.tag }}'"
   when:
-  - "'uuid' in opensmtpd_jail and (opensmtpd_jail['uuid'] is not defined or opensmtpd_jail['uuid'] == '-')"
-  tags:
-  - iocage-jails
-  - iocage-opensmtpd
-  - smtp
-  - mail
-
-- name: Find UUID for {{ production_jails.opensmtpd.tag  }}
-  iocage: state=exists tag='{{ production_jails.opensmtpd.tag }}'
-  changed_when: false
-  register: opensmtpd_jail
+  - opensmtpd_jail | failed
   tags:
   - iocage-jails
   - iocage-opensmtpd
@@ -51,7 +42,7 @@
   - mail
 
 - name: Register jail's root diretory
-  stat: path='/iocage/jails/{{ opensmtpd_jail.uuid }}/root/'
+  stat: path='/iocage/tags/{{ production_jails.opensmtpd.tag }}/root/'
   register: opensmtpd_jail_dir
   tags:
   - iocage-jails

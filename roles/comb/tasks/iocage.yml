@@ -30,7 +30,17 @@
 
 - name: Mark zpool for iocage usage
   shell:  iocage activate {{ iocage_zpool }}
-  when: not zpool_activated.stat.exists
+  when:
+  - not zpool_activated.stat.exists
+  - ansible_connection != "chroot"
+  tags:
+  - iocage-comb
+
+- name: bsdinstall Mark zpool for iocage usage
+  local_action: shell iocage activate {{ iocage_zpool }}
+  when:
+  - not zpool_activated.stat.exists
+  - ansible_connection == "chroot"
   tags:
   - iocage-comb
 
@@ -42,9 +52,21 @@
   - pkg-server
 
 - name: Fetch {{ host_os }} release {{ iocage_release_version }}
-  shell: echo "{{ iocage_release_version }}" | /usr/local/sbin/iocage fetch ftpfiles="{{ iocage_ftp_files}}"  ftphost={{ iocage_ftp_host }} ftpdir={{ iocage_ftp_dir }}
+  shell: echo "{{ iocage_release_version }}" | /usr/local/sbin/iocage fetch ftpfiles="{{ iocage_ftp_files}}"  ftphost="{{ iocage_ftp_host }}" ftpdir="{{ iocage_ftp_dir }}"
 
-  when: release_dir.stat.isdir is undefined
+  when: 
+  - release_dir.stat.isdir is undefined
+  - ansible_connection != "chroot"
+  tags:
+  - iocage-comb
+  - pkg-server
+
+- name: bsdinstall Fetch {{ host_os }} release {{ iocage_release_version }}
+  local_action: shell echo "{{ iocage_release_version }}" | /usr/local/sbin/iocage fetch ftpfiles="{{ iocage_ftp_files }}"  ftplocaldir=/usr/freebsd-dist
+
+  when: 
+  - release_dir.stat.isdir is undefined
+  - ansible_connection == "chroot"
   tags:
   - iocage-comb
   - pkg-server

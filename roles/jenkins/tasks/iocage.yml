@@ -23,6 +23,7 @@
 ---
 - name: Check if jenkins jail already exists
   iocage: state=exists tag='{{ production_jails.jenkins.tag }}'
+  ignore_errors: true
   register: jenkins_jail
   tags:
   - iocage-jenkins
@@ -33,26 +34,15 @@
 - name: Create jenkins jail {{ production_jails.jenkins.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.jenkins.tag }} properties="ip4_addr='{{ production_jails.jenkins.interface }}|{{ production_jails.jenkins.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.jenkins.tag }}'"
   when:
-  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is not defined or jenkins_jail['uuid'] == '-')"
+  - jenkins_jail|failed
   tags:
   - iocage-jenkins
   - iocage-jails
-  - jenkins
-  - automation
-
-- name: Find UUID for {{ production_jails.jenkins.tag  }}
-  iocage: state=exists tag='{{ production_jails.jenkins.tag }}'
-  changed_when: false
-  register: jenkins_jail
-  tags:
-  - iocage-jenkins
-  - iocage-jails
-  - jenkins-debug
   - jenkins
   - automation
 
 - name: Register jail's root diretory
-  stat: path='/iocage/jails/{{ jenkins_jail.uuid }}/root/'
+  stat: path='/iocage/tags/{{ production_jails.jenkins.tag }}/root/'
   register: jenkins_jail_dir
   tags:
   - iocage-jenkins

@@ -23,6 +23,7 @@
 ---
 - name: Check if gitlab jail already exists
   iocage: state=exists tag='{{ production_jails.gitlab.tag }}'
+  ignore_errors: true
   register: gitlab_jail
   tags:
   - iocage-gitlab
@@ -33,7 +34,7 @@
 - name: Create gitlab jail {{ production_jails.gitlab.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.gitlab.tag }} properties="ip4_addr='{{ production_jails.gitlab.interface }}|{{ production_jails.gitlab.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.gitlab.tag }}'"
   when:
-  - "'uuid' in gitlab_jail and (gitlab_jail['uuid'] is not defined or gitlab_jail['uuid'] == '-')"
+  - gitlab_jail|failed
   tags:
   - iocage-gitlab
   - iocage-jails
@@ -51,7 +52,7 @@
   - code
 
 - name: Register jail's root diretory
-  stat: path='/iocage/jails/{{ gitlab_jail.uuid }}/root/'
+  stat: path='/iocage/tags/{{ production_jails.gitlab.tag }}/root/'
   register: gitlab_jail_dir
   tags:
   - iocage-gitlab

@@ -23,6 +23,7 @@
 ---
 - name: Check if NGINX jail already exists
   iocage: state=exists tag='{{ production_jails.nginx_proxy.tag }}'
+  ignore_errors: true
   register: nginx_proxy_jail
   tags:
   - iocage-jails
@@ -34,26 +35,15 @@
 - name: Create NGINX jail {{ production_jails.nginx_proxy.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.nginx_proxy.tag }} properties="ip4_addr='{{ production_jails.nginx_proxy.interface }}|{{ production_jails.nginx_proxy.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.nginx_proxy.tag }}'"
   when:
-  - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is not defined or nginx_proxy_jail['uuid'] == '-')"
+  - nginx_proxy_jail | failed
   tags:
   - iocage-jails
   - iocage-nginx_proxy
   - nginx_proxy
-  - proxy
-
-- name: Find UUID for {{ production_jails.nginx_proxy.tag  }}
-  iocage: state=exists tag='{{ production_jails.nginx_proxy.tag }}'
-  changed_when: false
-  register: nginx_proxy_jail
-  tags:
-  - iocage-jails
-  - iocage-nginx_proxy
-  - nginx_proxy
-  - nginx_proxy-debug
   - proxy
 
 - name: Register jail's root diretory
-  stat: path='/iocage/jails/{{ nginx_proxy_jail.uuid }}/root/'
+  stat: path='/iocage/tags/{{ production_jails.nginx_proxy.tag }}/root/'
   register: nginx_proxy_jail_dir
   tags:
   - iocage-jails

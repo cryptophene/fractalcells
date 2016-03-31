@@ -42,3 +42,6 @@
       dest: /usr/local/etc/sudoers.d/fractalcells
       mode: 0440
       validate: 'visudo -cf %s'
+
+  - name: mount devfs
+    local_action: shell mount -t devfs devfs /mnt/dev
