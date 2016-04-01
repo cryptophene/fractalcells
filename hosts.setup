@@ -1,0 +1,4 @@
+[default]
+localhost	ansible_connection=local
+[fractalcells]
+localhost	ansible_connection=local
