@@ -26,56 +26,35 @@
   shell: ifconfig '{{ openvpn.interface }}'
   register: openvpn_ifconfig
   ignore_errors: true
-  tags:
-  - openvpn
-  - vpn
 
 - name: Create tun device
   shell: ifconfig '{{ openvpn.interface }}' create
   when: openvpn_ifconfig|failed
-  tags:
-  - openvpn
-  - vpn
 
 - name: Make sure openvpn jail is started
   iocage: state=started tag='{{ production_jails.openvpn.tag }}'
-  tags:
-  - openvpn
-  - vpn
   register: openvpn_jail
 
 - name: Set VPN route
   shell: route add -net '{{ openvpn.subnet }}' '{{ openvpn.internal_ip }}'
-  tags:
-  - openvpn
-  - vpn
   ignore_errors: true
 
 - name: Enable openvpn services
   when:
-  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
+  - openvpn_jail|success
   lineinfile: dest={{ openvpn_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
   with_items:
   - { line: "openvpn_enable=\"YES\"" }
-  tags:
-  - openvpn
-  - vpn
 
 - name: Install Openvpn
   when:
-  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
+  - openvpn_jail|success
   iocage: state=pkg tag={{ production_jails.openvpn.tag }} cmd="install -y {{ production_jails.openvpn.pkgs | join(' ') }}"
-  tags:
-  - openvpn
-  - vpn
 
 - name: Create directories
   file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
-  tags:
-  - openvpn
-  - vpn
   when:
-  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
+  - openvpn_jail|success
   with_items:
   - { path: '{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn', mode: '755', owner: root, group: wheel }
   - { path: '{{ openvpn_jail_dir.stat.path }}/var/log/openvpn', mode: '755', owner: nobody, group: nobody }
@@ -86,18 +65,14 @@
   stat: path='{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.cert.pem'
   register: openvpn_proxy_cert
   tags:
-  - openvpn
-  - vpn
   - certs
 
 - name: Copy Proxy Key, CSR and Cert to the {{ production_jails.openvpn.tag }} jail
   shell: cp -a {{ item.origin }} {{ item.destination }}
   tags:
-  - openvpn
-  - vpn
   - certs
   when:
-  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
+  - openvpn_jail|success
   - not openvpn_proxy_cert.stat.exists
   with_items:
   - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.cert.pem', destination: '{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/{{ certificate_authority.short_name }}_proxy.cert.pem' }
@@ -108,8 +83,6 @@
 - name: Make Proxy Key, CSR and Cert readonly
   file: path={{ item.path }} state=file mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
   tags:
-  - openvpn
-  - vpn
   - certs
   when:
   - not openvpn_proxy_cert.stat.exists
@@ -122,32 +95,20 @@
 - name: See if DH cert is present
   stat: path='{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/dh4096.pem'
   register: openvpn_dh_4096
-  tags:
-  - openvpn
-  - vpn
 
 - name: Deploy DH cert ({{ config.openvpn.dhparam_strength }} bits)
   shell: openssl dhparam -out {{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/dh{{ config.openvpn.dhparam_strength }}.pem {{ config.openvpn.dhparam_strength }}
   when:
   - not openvpn_dh_4096.stat.exists
-  tags:
-  - openvpn
-  - vpn
 
 - name: See if tls auth key present
   stat: path='{{ openvpn_jail_dir.stat.path }}/usr/local/etc/openvpn/private/ta.key'
   register: openvpn_tls_auth_key
-  tags:
-  - openvpn
-  - vpn
 
 - name: Deploy tls auth key
   iocage: state=exec tag={{ openvpn_jail.uuid }} cmd="openvpn --genkey --secret /usr/local/etc/openvpn/private/ta.key"
   when:
   - not openvpn_tls_auth_key.stat.exists
-  tags:
-  - openvpn
-  - vpn
 
 - name: Deploy OpenVPN configs
   template: src='{{ item.name }}.j2' dest='{{ openvpn_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
@@ -155,26 +116,17 @@
   - { name: "openvpn.conf", path: "/usr/local/etc/openvpn", mode: 644 }
   - { name: "openvpn-auth-ldap.conf", path: "/usr/local/etc/openvpn", mode: 644 }
   when:
-  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
-  tags:
-  - openvpn
-  - vpn
+  - openvpn_jail|success
 
 - name: Check if openvpn is already running
   iocage: state=exec tag={{ openvpn_jail.uuid }} cmd="/bin/pgrep openvpn"
   register: openvpn_running
   ignore_errors: yes
   when:
-  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
-  tags:
-  - openvpn
-  - vpn
+  - openvpn_jail|success
 
 - name: Start OpenVPN
   iocage: state=exec tag={{ openvpn_jail.uuid }} cmd="/bin/sh -c \"service openvpn start\""
   when:
-  - "'uuid' in openvpn_jail and (openvpn_jail['uuid'] is defined and openvpn_jail['uuid'] != '-')"
+  - openvpn_jail|success
   - openvpn_running|failed
-  tags:
-  - openvpn
-  - vpn

@@ -27,10 +27,6 @@
   register: nginx_internal_jail
   tags:
   - iocage-jails
-  - iocage-nginx_internal
-  - nginx_internal
-  - nginx_internal-debug
-  - proxy
 
 - name: Create NGINX internal jail {{ production_jails.nginx_internal.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.nginx_internal.tag }} properties="ip4_addr='{{ production_jails.nginx_internal.interface }}|{{ production_jails.nginx_internal.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.nginx_internal.tag }}'"
@@ -38,19 +34,12 @@
   - nginx_internal_jail|failed
   tags:
   - iocage-jails
-  - iocage-nginx_internal
-  - nginx_internal
-  - proxy
 
 - name: Register jail's root diretory
-  stat: path='/iocage/tags/{{ production_jails.nginx_internal.tag }}/root/'
+  stat: path='{{ iocage_mountpoint.stdout_lines[0] }}/tags/{{ production_jails.nginx_internal.tag }}/root/'
   register: nginx_internal_jail_dir
   tags:
   - iocage-jails
-  - iocage-nginx_internal
-  - nginx_internal
-  - nginx_internal-debug
-  - proxy
 
 - assert:
     that:
@@ -58,6 +47,3 @@
       - nginx_internal_jail_dir.stat.isdir
   tags:
   - iocage-jails
-  - iocage-nginx_internal
-  - nginx_internal
-  - proxy

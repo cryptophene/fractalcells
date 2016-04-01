@@ -22,4 +22,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - include: iocage.yml
+  tags: ['gitlab-iocage', 'cells']
 - include: gitlab.yml
+  tags: ['gitlab-setup']
+  when: ansible_connection != "chroot"

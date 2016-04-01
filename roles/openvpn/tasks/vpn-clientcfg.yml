@@ -23,24 +23,15 @@
 ---
 - name: Create /root/vpn/
   file: path=/home/{{ user.handle }}/vpn/ state=directory mode=0755
-  tags:
-  - openvpn-config
 - name: Deploy vpn.conf
   template: src='vpn.conf.j2' dest='/home/{{ user.handle }}/vpn/vpn.conf' mode=0640
-  run_once: true
-  tags:
-  - openvpn-config
 - name: Copy cert and ta.key
   shell: cp -a {{ item.origin }} {{ item.destination }}
   with_items:
   - { origin: "{{ certificate_authority.certificate_directory }}/ca/intermediate/certs/{{ certificate_authority.short_name }}_ca.cert.pem", destination:  "/home/{{ user.handle }}/vpn/{{ certificate_authority.short_name }}_ca.cert.pem" }
   - { origin: "/iocage/tags/{{ production_jails.openvpn.tag }}/root/usr/local/etc/openvpn/private/ta.key", destination: "/home/{{ user.handle }}/vpn/ta.key" }
-  tags:
-  - openvpn-config
 - name: chmod and bundle vpn archive
   shell: "{{ item.command }}"
   with_items:
   - { command: "chown -R {{ user.handle }} /home/{{ user.handle }}/vpn/ta.key" }
   - { command: "sleep 1 && cd /home/{{ user.handle }} && tar cfvz vpn.tgz vpn/" }
-  tags:
-  - openvpn-config

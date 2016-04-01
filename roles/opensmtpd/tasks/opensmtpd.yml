@@ -23,9 +23,6 @@
 ---
 - name: Make sure OpenSMTPD jail is started
   iocage: state=started tag='{{ production_jails.opensmtpd.tag }}'
-  tags:
-  - smtp
-  - mail
   register: opensmtpd_jail
 
 - name: Install OpenSMTPD
@@ -33,9 +30,6 @@
   when:
   - "'uuid' in opensmtpd_jail and (opensmtpd_jail['uuid'] is defined and opensmtpd_jail['uuid'] != '-')"
   run_once: true
-  tags:
-  - smtp
-  - mail
 
 - name: Deploy OpenSMTPD config files
   when:
@@ -45,30 +39,17 @@
           - { name: "authinfo.db", path: "/usr/local/etc/mail", mode: 600 }
           - { name: "smtpd.conf", path: "/usr/local/etc/mail", mode: 644 }
   register: opensmtpd_config_deployed
-  tags:
-  - smtp
-  - smtp-debug
-  - mail
 
 - name: Enable OpenSMTPD service
   lineinfile: dest={{ opensmtpd_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="smtpd_enable=\"YES\""
   when:
   - "'uuid' in opensmtpd_jail and (opensmtpd_jail['uuid'] is defined and opensmtpd_jail['uuid'] != '-')"
-  tags:
-  - smtp
-  - mail
 
 - name: Fix OpenSMTPD hosts file
   lineinfile: dest={{ opensmtpd_jail_dir.stat.path }}/etc/hosts state=present line="{{ production_jails.opensmtpd.ip }}  {{ production_jails.opensmtpd.hostname }} {{ opensmtpd_jail.uuid }}" regexp="^{{ production_jails.opensmtpd.ip }}"
   when:
   - "'uuid' in opensmtpd_jail and (opensmtpd_jail['uuid'] is defined and opensmtpd_jail['uuid'] != '-')"
-  tags:
-  - smtp
-  - mail
 
 # TODO: move to notify/handler thing once iocage module is there
 - name: start opensmtpd
   iocage: state=exec tag={{ opensmtpd_jail.uuid }} cmd="/bin/sh -c \"service smtpd restart\""
-  tags:
-  - smtp
-  - mail

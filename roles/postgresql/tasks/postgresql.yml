@@ -23,11 +23,6 @@
 ---
 - name: Make sure postgresql jail is started
   iocage: state=started tag='{{ production_jails.postgresql.tag }}'
-  tags:
-  - pgsql
-  - pgsql-debug
-  - pgsql-roles
-  - pgsql-dbs
   register: postgresql_jail
 
 - name: Install PostgreSQL 9.4
@@ -35,34 +30,22 @@
   run_once: true
   when:
   - "'uuid' in postgresql_jail and (postgresql_jail['uuid'] is defined and postgresql_jail['uuid'] != '-')"
-  tags:
-  - db
-  - pgsql
 
 # XXX: ugly hack
 - name: Enable Postgresql service
   lineinfile: dest={{ postgresql_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="postgresql_enable=\"YES\""
   when:
   - "'uuid' in postgresql_jail and (postgresql_jail['uuid'] is defined and postgresql_jail['uuid'] != '-')"
-  tags:
-  - db
-  - pgsql
 
 - name: Check if postgresql jail needs postgresql initdb
   stat: path=/iocage/jails/{{ postgresql_jail.uuid }}/root/usr/local/pgsql/data
   register: postgresql_data_dir
-  tags:
-  - db
-  - pgsql
 
 - name: Initialize PostgreSQL 9.4
   when:
   - "'uuid' in postgresql_jail and (postgresql_jail['uuid'] is defined and postgresql_jail['uuid'] != '-')"
   - not postgresql_data_dir.stat.exists
   iocage: state=exec tag={{ production_jails.postgresql.tag }} cmd="/bin/sh -c \"service postgresql initdb\""
-  tags:
-  - db
-  - pgsql
 
 - name: Deploy PostgresSQL config files
   template: src='{{ item.name }}.j2' dest='{{ postgresql_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
@@ -72,40 +55,26 @@
   - { name: "pg_hba.conf", path: "/usr/local/pgsql/data", mode: 644 }
   - { name: "postgresql.conf", path: "/usr/local/pgsql/data", mode: 644 }
   register: postgresql_config_deployed
-  tags: 
-  - db
-  - pgsql
 
 # XXX: FIX THIS
 - name: Check if postgresql jail needs postmaster run
   stat: path=/iocage/jails/{{ postgresql_jail.uuid }}/root/usr/local/pgsql/data/postmaster.opts
   register: postgresql_postmaster_file
-  tags:
-  - db
-  - pgsql
 
 - name: Initialize Postgres 9.4, part II
   iocage: state=exec tag={{ production_jails.postgresql.tag }} user=pgsql cmd="/bin/sh -c \"/usr/local/bin/postmaster -D /usr/local/pgsql/data &\""
   when:
   - "'uuid' in postgresql_jail and (postgresql_jail['uuid'] is defined and postgresql_jail['uuid'] != '-')"
   - not postgresql_postmaster_file.stat.exists
-  tags:
-  - db
-  - pgsql
+
 # TODO: Remove ugly hack.
 - name: Initialize Postgres 9.4, part III
   iocage: state=exec tag={{ production_jails.postgresql.tag }} cmd="/bin/sh -c \"sleep 5 && service postgresql stop || /usr/bin/true\""
   when:
   - "'uuid' in postgresql_jail and (postgresql_jail['uuid'] is defined and postgresql_jail['uuid'] != '-')"
   - not postgresql_postmaster_file.stat.exists
-  tags:
-  - db
-  - pgsql
 
 - name: start postgresql service
   iocage: state=exec tag={{ postgresql_jail.uuid }} cmd="/bin/sh -c \"service postgresql restart\""
   when:
   - "'uuid' in postgresql_jail and (postgresql_jail['uuid'] is defined and postgresql_jail['uuid'] != '-')"
-  tags:
-  - db
-  - pgsql

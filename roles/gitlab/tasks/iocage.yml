@@ -26,39 +26,27 @@
   ignore_errors: true
   register: gitlab_jail
   tags:
-  - iocage-gitlab
   - iocage-jails
-  - gitlab
-  - code
 
 - name: Create gitlab jail {{ production_jails.gitlab.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.gitlab.tag }} properties="ip4_addr='{{ production_jails.gitlab.interface }}|{{ production_jails.gitlab.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.gitlab.tag }}'"
   when:
   - gitlab_jail|failed
   tags:
-  - iocage-gitlab
   - iocage-jails
-  - gitlab
-  - code
 
 - name: Find UUID for {{ production_jails.gitlab.tag  }}
   iocage: state=exists tag='{{ production_jails.gitlab.tag }}'
   changed_when: false
   register: gitlab_jail
   tags:
-  - iocage-gitlab
   - iocage-jails
-  - gitlab
-  - code
 
 - name: Register jail's root diretory
-  stat: path='/iocage/tags/{{ production_jails.gitlab.tag }}/root/'
+  stat: path='{{ iocage_mountpoint.stdout_lines[0] }}/tags/{{ production_jails.gitlab.tag }}/root/'
   register: gitlab_jail_dir
   tags:
-  - iocage-gitlab
   - iocage-jails
-  - gitlab
-  - code
 
 - assert:
     that:
@@ -66,7 +54,4 @@
       - gitlab_jail_dir.stat.exists
       - gitlab_jail_dir.stat.isdir
   tags:
-  - iocage-gitlab
   - iocage-jails
-  - gitlab
-  - code

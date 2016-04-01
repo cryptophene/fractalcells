@@ -21,37 +21,21 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
+dependencies:
+- role: nginx_proxy
+
 - name: Make sure NGINX internal jail is started
   iocage: state=started tag='{{ production_jails.nginx_internal.tag }}'
-  tags:
-  - nginx_internal
-  - proxy
   register: nginx_internal_jail
-
-- name: Deploy pkg repo config
-  template: src='{{ item.name }}.j2' dest='{{ nginx_internal_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
-  with_items:
-  - { name: "fractalcells.conf", path: "/etc/pkg", mode: 644 }
-  when:
-  - nginx_internal_jail|success
-  tags:
-  - nginx_internal
-  - proxy
 
 - name: Install NGINX and components
   when:
-  - "'uuid' in nginx_internal_jail and (nginx_internal_jail['uuid'] is defined and nginx_internal_jail['uuid'] != '-')"
+  - nginx_internal_jail|success
   run_once: true
   iocage: state=pkg tag={{ production_jails.nginx_internal.tag }} cmd="install -y {{ production_jails.nginx_internal.pkgs | join(' ') }}"
-  tags:
-  - nginx_internal
-  - proxy
 
 - name: Create directories
   file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
-  tags:
-  - nginx_internal
-  - proxy
   with_items:
   - { path: '{{ nginx_internal_jail_dir.stat.path }}/usr/local/etc/nginx/conf.d', mode: '755', owner: root, group: wheel }
   - { path: '{{ nginx_internal_jail_dir.stat.path }}/var/log/nginx', mode: '755', owner: www, group: www }
@@ -60,7 +44,7 @@
 
 - name: Deploy NGINX config files
   when:
-  - "'uuid' in nginx_internal_jail and (nginx_internal_jail['uuid'] is defined and nginx_internal_jail['uuid'] != '-')"
+  - nginx_internal_jail|success
   template: src='{{ item.name }}.j2' dest='{{ nginx_internal_jail_dir.stat.path }}{{ item.path }}/{{ item.name }}' mode={{ item.mode}} owner={{ item.owner }} group={{ item.group }}
   with_items:
   - { name: "nginx.conf", path: "/usr/local/etc/nginx", mode: 644, owner: root, group: wheel  }
@@ -72,27 +56,16 @@
   - { name: "zabbix.conf.php", path: "/usr/local/www/zabbix24/conf", mode: 600, owner: www, group: www }
   - { name: "index.html", path: "/usr/local/www/nginx-dist", mode: 644, owner: www, group: www }
   register: nginx_internal_config_deployed
-  tags:
-  - nginx_internal
-  - nginx_internal-debug
-  - proxy
 
 - name: Enable NGINX internal services
   when:
-  - "'uuid' in nginx_internal_jail and (nginx_internal_jail['uuid'] is defined and nginx_internal_jail['uuid'] != '-')"
+  - nginx_internal_jail|success
   lineinfile: dest={{ nginx_internal_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
   with_items:
   - { line: "nginx_enable=\"YES\"" }
   - { line: "php_fpm_enable=\"YES\"" }
-  tags:
-  - nginx_internal
-  - proxy
 
 # TODO: move to notify/handler thing once iocage module is there
 # TODO: use reloaded instead of restarted
 - name: restart nginx
   iocage: state=exec tag={{ nginx_internal_jail.uuid }} cmd="/bin/sh -c \"service nginx restart && service php-fpm restart\""
-  tags:
-  - nginx_internal
-  - nginx_internal-debug
-  - proxy

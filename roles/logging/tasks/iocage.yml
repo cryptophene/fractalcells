@@ -42,7 +42,7 @@
   - logs
 
 - name: Register jail's root diretory
-  stat: path='/iocage/tags/{{ production_jails.logging.tag }}/root/'
+  stat: path='{{ iocage_mountpoint.stdout_lines[0] }}/tags/{{ production_jails.logging.tag }}/root/'
   register: logging_jail_dir
   tags:
   - iocage-logging

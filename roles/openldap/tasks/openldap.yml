@@ -23,29 +23,13 @@
 ---
 - name: Make sure OpenLDAP jail is started
   iocage: state=started tag='{{ production_jails.openldap.tag }}'
-  tags:
-  - ldap
-  - auth
   register: openldap_jail
-
-- name: Deploy pkg.fractalcells.com repo config
-  template: src='{{ item.name }}.j2' dest='{{ openldap_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
-  with_items:
-  - { name: "fractalcells.conf", path: "/etc/pkg", mode: 644 }
-  when:
-  - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
-  tags:
-  - ldap
-  - auth
 
 - name: Install OpenLDAP 2.4
   when:
   - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
   run_once: true
   iocage: state=pkg tag={{ production_jails.openldap.tag }} cmd="install -y {{ production_jails.openldap.pkgs | join(' ') }}"
-  tags:
-  - ldap
-  - auth
 
 - name: Enable OpenLDAP service
   when:
@@ -54,46 +38,27 @@
   with_items:
   - { line: "slapd_enable=\"YES\"" }
   - { line: "slapd_flags='-h \"ldapi:///var/run/openldap/ldapi/ ldap://0.0.0.0/ ldaps://0.0.0.0/\"'" }
-  tags:
-  - ldap
-  - ldap-service
-  - auth
 
 - name: Hash user password
   iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"slappasswd -h '{SHA}' -s '{{ user.password }}' \""
   register: ldap_user_hash
-  tags:
-  - ldap
-  - auth
 
 - name: Hash Zabbix Admin password
   iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"slappasswd -h '{SHA}' -s '{{ config.zabbix.password }}' \""
   register: ldap_zabbix_hash
-  tags:
-  - ldap
-  - auth
 
 - name: Hash Manager Admin password
   iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"slappasswd -h '{SHA}' -s '{{ config.openldap.manager_password }}' \""
   register: ldap_manager_hash
-  tags:
-  - ldap
-  - auth
 
 - name: Hash Zabbix Admin password
   iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"slappasswd -h '{SHA}' -s '{{ config.gitlab.root_password }}' \""
   register: ldap_gitlab_root_hash
-  tags:
-  - ldap
-  - auth
 
 - name: Create directories
   file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
   tags:
-  - ldap
-  - auth
   - certs
-  - ldap-service
   when:
   - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
   with_items:
@@ -112,30 +77,20 @@
   register: openldap_config_deployed
   when:
   - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
-  tags:
-  - ldap-service
-  - ldap
-  - debug
-  - auth
 
 - name: Determine if {{ production_jails.openldap.tag }} jail needs certs
   stat: path='{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem'
   register: openldap_proxy_cert
   tags:
-  - ldap
-  - auth
   - certs
-  - ldap-service
 
 - name: Copy Proxy Key, CSR and Cert to the {{ production_jails.openldap.tag }} jail
   shell: cp -a {{ item.origin }} {{ item.destination }}
   tags:
-  - ldap
-  - auth
   - certs
   when:
   - not openldap_proxy_cert.stat.exists
-  - "'uuid' in openldap_jail and (openldap_jail['uuid'] is defined and openldap_jail['uuid'] != '-')"
+  - openldap_jail | success
   with_items:
   - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.cert.pem', destination: '{{ openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.cert.pem' }
   - { origin: '{{ certificate_authority.certificate_directory }}/proxy/certs/{{ certificate_authority.short_name }}_proxy.csr.pem', destination: '{{  openldap_jail_dir.stat.path }}/usr/local/etc/openldap/private/{{ certificate_authority.short_name }}_proxy.csr.pem' }
@@ -145,8 +100,6 @@
 - name: Make Proxy Key, CSR and Cert readonly
   file: path={{ item.path }} state=file mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
   tags:
-  - ldap
-  - auth
   - certs
   when:
   - not openldap_proxy_cert.stat.exists
@@ -158,22 +111,13 @@
 
 - name: start openldap
   iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"service slapd restart\""
-  tags:
-  - ldap
-  - auth
 
 - name: Does tree need to be imported?
   iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \" ldapsearch -x -h localhost -p 389 -D cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}  -w '{{ config.openldap.manager_password }}' -b dc={{ external_domain.split('.') | join(',dc=') }} uid={{ user.handle }} | grep numEntries\" "
   register: ldap_user_present
   ignore_errors: true
-  tags:
-  - ldap
-  - auth
 
 - name: import tree.ldif
   iocage: state=exec tag={{ openldap_jail.uuid }} user=root cmd="/bin/sh -c \"ldapmodify -h localhost -p 389 -D cn=Manager,dc={{ external_domain.split('.') | join(',dc=') }}  -w '{{ config.openldap.manager_password }}' -a -f /root/tree.ldif\" "
-  tags:
-  - ldap
-  - auth
   when:
   - ldap_user_present|failed

@@ -22,4 +22,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - include: iocage.yml
+  tags: ['logging-iocage']
 - include: logging.yml
+  tags: ['logging-setup']
+  when: ansible_connection != "chroot"

@@ -22,7 +22,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - include: iocage.yml
-# - include: net.yml
-# - include: pf.yml
-# - include: sshd.yml
-# - include: user.yml
+  tags: ['cell-iocage']
+  #XXX: Think. What do you want?
+  #when: ansible_connection != "chroot"

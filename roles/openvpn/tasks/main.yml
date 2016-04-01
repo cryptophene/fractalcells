@@ -22,5 +22,10 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - include: iocage.yml
+  tags: ['openvpn-iocage', 'cells']
 - include: openvpn.yml
+  tags: ['openvpn-setup']
+  when: ansible_connection != "chroot"
 - include: vpn-clientcfg.yml
+  tags: ['openvpn-config']
+  when: ansible_connection != "chroot"

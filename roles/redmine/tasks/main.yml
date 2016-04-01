@@ -22,4 +22,10 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - include: iocage.yml
+  tags: ['redmine-iocage', 'cells']
 - include: redmine.yml
+  tags: ['redmine-setup']
+  when: ansible_connection != "chroot"
+- include: data.yml
+  tags: ['redmine-setup']
+  when: ansible_connection != "chroot"

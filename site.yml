@@ -27,17 +27,22 @@
   #strategy: free
   #accelerate: true
   roles:
-    - comb
-    - certs
-    - cell
-    - logging
-    - postgresql
-    - opensmtpd
-    - openldap
-    - nginx_proxy
-    - nginx_internal
-    - redmine
-    - zabbix
-    - jenkins
-    - openvpn
-    - gitlab
+  - { name: comb, tags: ['comb'] }
+  - { name: comb-mounts, tags: ['comb-mounts'] }
+  - { name: certs, tags: ['certs'],
+      when: ansible_connection != "chroot" }
+  - { name: cell, tags: ['cell'] }
+  - { name: cell-mounts, tags: ['cell-mounts', 'cells'] }
+  - { name: logging, tags: ['logging'] }
+  - { name: postgresql, tags: ['postgresql'] }
+  - { name: postgresql-data, tags: ['postgresql'],
+      when: ansible_connection != "chroot" }
+  - { name: opensmtpd, tags: ['opensmtpd', 'mail'] }
+  - { name: openldap, tags: ['openldap'] }
+  - { name: nginx_proxy, tags: ['nginx_proxy'] }
+  - { name: nginx_internal, tags: ['nginx_internal'] }
+  - { name: redmine, tags: ['redmine'] }
+  - { name: zabbix, tags: ['zabbix'] }
+  - { name: jenkins, tags: ['jenkins'] }
+  - { name: openvpn, tags: ['openvpn'] }
+  - { name: gitlab, tags: ['gitlab'] }

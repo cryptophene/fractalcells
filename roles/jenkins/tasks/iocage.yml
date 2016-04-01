@@ -26,30 +26,20 @@
   ignore_errors: true
   register: jenkins_jail
   tags:
-  - iocage-jenkins
   - iocage-jails
-  - jenkins
-  - automation
 
 - name: Create jenkins jail {{ production_jails.jenkins.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.jenkins.tag }} properties="ip4_addr='{{ production_jails.jenkins.interface }}|{{ production_jails.jenkins.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.jenkins.tag }}'"
   when:
   - jenkins_jail|failed
   tags:
-  - iocage-jenkins
   - iocage-jails
-  - jenkins
-  - automation
 
 - name: Register jail's root diretory
-  stat: path='/iocage/tags/{{ production_jails.jenkins.tag }}/root/'
+  stat: path='{{ iocage_mountpoint.stdout_lines[0] }}/tags/{{ production_jails.jenkins.tag }}/root/'
   register: jenkins_jail_dir
   tags:
-  - iocage-jenkins
   - iocage-jails
-  - jenkins-debug
-  - jenkins
-  - automation
 
 - assert:
     that:
@@ -57,7 +47,4 @@
       - jenkins_jail_dir.stat.exists
       - jenkins_jail_dir.stat.isdir
   tags:
-  - iocage-jenkins
   - iocage-jails
-  - jenkins
-  - automation

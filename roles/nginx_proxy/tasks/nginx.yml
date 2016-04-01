@@ -23,25 +23,16 @@
 ---
 - name: Make sure NGINX proxy jail is started
   iocage: state=started tag='{{ production_jails.nginx_proxy.tag }}'
-  tags:
-  - nginx_proxy
-  - proxy
   register: nginx_proxy_jail
 
 - name: Install NGINX
   when:
-  - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is defined and nginx_proxy_jail['uuid'] != '-')"
+  - nginx_proxy_jail|success
   run_once: true
   iocage: state=pkg tag={{ production_jails.nginx_proxy.tag }} cmd="install -y {{ production_jails.nginx_proxy.pkgs | join(' ') }}"
-  tags:
-  - nginx_proxy
-  - proxy
 
 - name: Create directories
   file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
-  tags:
-  - nginx_proxy
-  - proxy
   with_items:
   - { path: '{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/', mode: '700', owner: 389, group: 389 }
   - { path: '{{ nginx_proxy_jail_dir.stat.path }}/usr/local/etc/nginx/conf.d', mode: '755', owner: root, group: wheel }
@@ -52,15 +43,11 @@
   stat: path='{{ nginx_proxy_jail_dir.stat.path }}{{ certificate_authority.certificate_directory }}/{{ certificate_authority.short_name }}_proxy.cert.pem'
   register: nginx_proxy_cert
   tags:
-  - nginx_proxy
-  - proxy
   - certs
 
 - name: Copy Proxy Key, CSR and Cert to the {{ production_jails.nginx_proxy.tag }} jail
   shell: cp -a {{ item.origin }} {{ item.destination }}
   tags:
-  - nginx_proxy
-  - proxy
   - certs
   when:
   - not nginx_proxy_cert.stat.exists
@@ -74,8 +61,6 @@
 - name: Make Proxy Key, CSR and Cert readonly
   file: path={{ item.path }} state=file mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
   tags:
-  - nginx_proxy
-  - proxy
   - certs
   when:
   - not nginx_proxy_cert.stat.exists
@@ -87,53 +72,36 @@
 
 - name: Deploy NGINX config files
   when:
-  - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is defined and nginx_proxy_jail['uuid'] != '-')"
+  - nginx_proxy_jail|success
   template: src='{{ item.name }}.j2' dest='{{ nginx_proxy_jail_dir.stat.path }}{{ item.path }}/{{ item.name }}' mode={{ item.mode}} #owner=root group=257
   with_items:
   - { name: "nginx.conf", path: "/usr/local/etc/nginx", mode: 644 }
   register: nginx_proxy_config_deployed
-  tags:
-  - nginx_proxy
-  - proxy
 
 - name: Deploy NGINX SSL config file
   template: src='ssl.conf.j2' dest='{{ nginx_proxy_jail_dir.stat.path }}/usr/local/etc/nginx/conf.d/ssl.conf' mode=644 owner=80 group=80
   with_dict: "{{ production_jails }}"
   when:
-  - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is defined and nginx_proxy_jail['uuid'] != '-')"
+  - nginx_proxy_jail|success
   - item.value.nginx_proxied is defined
   register: nginx_proxy_site_config_deployed
-  tags:
-  - nginx_proxy
-  - nginx_proxy-debug
 
 - name: Deploy NGINX site config files
   template: src='forward.j2' dest='{{ nginx_proxy_jail_dir.stat.path }}/usr/local/etc/nginx/sites-enabled/{{ item.value.hostname }}.{{ external_domain }}.conf' mode=644 owner=80 group=80
   with_dict: "{{ production_jails }}"
   when:
-  - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is defined and nginx_proxy_jail['uuid'] != '-')"
+  - nginx_proxy_jail|success
   - item.value.nginx_proxied is defined
   register: nginx_proxy_site_config_deployed
-  tags:
-  - nginx_proxy
-  - nginx_proxy-debug
-  - proxy
 
 - name: Enable NGINX proxy services
   when:
-  - "'uuid' in nginx_proxy_jail and (nginx_proxy_jail['uuid'] is defined and nginx_proxy_jail['uuid'] != '-')"
+  - 
   lineinfile: dest={{ nginx_proxy_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
   with_items:
-          - { line: "nginx_enable=\"YES\"" }
-  tags:
-  - nginx_proxy
-  - proxy
+  - { line: "nginx_enable=\"YES\"" }
 
 # TODO: move to notify/handler thing once iocage module is fully there
 # TODO: use reloaded instead of restarted
 - name: restart nginx
   iocage: state=exec tag={{ nginx_proxy_jail.uuid }} cmd="/bin/sh -c \"service nginx restart\""
-  tags:
-  - nginx_proxy
-  - nginx_proxy-debug
-  - proxy

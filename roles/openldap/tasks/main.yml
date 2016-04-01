@@ -22,4 +22,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - include: iocage.yml
+  tags: ['openldap-iocage', 'cells']
 - include: ldap.yml
+  tags: ['openldap-setup']
+  when: ansible_connection != "chroot"

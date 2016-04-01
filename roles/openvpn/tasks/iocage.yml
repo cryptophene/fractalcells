@@ -26,29 +26,20 @@
   register: openvpn_jail
   ignore_errors: true
   tags:
-  - iocage-openvpn
   - iocage-jails
-  - openvpn
-  - vpn
 
 - name: Create openvpn jail {{ production_jails.openvpn.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.openvpn.tag }} properties="ip4_addr='{{ production_jails.openvpn.interface }}|{{ production_jails.openvpn.ip }},{{ openvpn.interface }}|{{ openvpn.ifconfig }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' exec_poststart='/sbin/route add -net {{ openvpn.subnet }} {{ openvpn.internal_ip }}' allow_raw_sockets=1 devfs_ruleset=6 host_hostname='{{ production_jails.openvpn.tag }}'"
   when:
   - openvpn_jail|failed
   tags:
-  - iocage-openvpn
   - iocage-jails
-  - openvpn
-  - vpn
 
 - name: Register jail's root diretory
-  stat: path='/iocage/tags/{{ production_jails.openvpn.tag }}/root/'
+  stat: path='{{ iocage_mountpoint.stdout_lines[0] }}/tags/{{ production_jails.openvpn.tag }}/root/'
   register: openvpn_jail_dir
   tags:
-  - iocage-openvpn
   - iocage-jails
-  - openvpn
-  - vpn
 
 - assert:
     that:
@@ -56,7 +47,4 @@
       - openvpn_jail_dir.stat.exists
       - openvpn_jail_dir.stat.isdir
   tags:
-  - iocage-openvpn
   - iocage-jails
-  - openvpn
-  - vpn

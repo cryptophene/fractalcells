@@ -27,9 +27,6 @@
   register: postgresql_jail
   tags:
   - iocage-jails
-  - iocage-postgresql
-  - pgsql
-  - db
 
 - name: Create PostgreSQL jail {{ production_jails.postgresql.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.postgresql.tag }} properties="ip4_addr='{{ production_jails.postgresql.interface }}|{{ production_jails.postgresql.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.postgresql.tag }}'"
@@ -38,18 +35,12 @@
   register: postgresql_jail
   tags:
   - iocage-jails
-  - iocage-postgresql
-  - pgsql
-  - db
 
 - name: Register jail's root diretory
-  stat: path=/iocage/tags/{{ production_jails.postgresql.tag }}/root/
+  stat: path={{ iocage_mountpoint.stdout_lines[0] }}/tags/{{ production_jails.postgresql.tag }}/root/
   register: postgresql_jail_dir
   tags:
   - iocage-jails
-  - iocage-postgresql
-  - pgsql
-  - db
 
 - assert:
     that:
@@ -57,6 +48,3 @@
       - postgresql_jail_dir.stat.isdir
   tags:
   - iocage-postgresql
-  - iocage-jails
-  - pgsql
-  - db

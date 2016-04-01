@@ -27,9 +27,6 @@
   ignore_errors: true
   tags:
   - iocage-jails
-  - iocage-opensmtpd
-  - smtp
-  - mail
 
 - name: Create OpenSMTPD jail {{ production_jails.opensmtpd.tag }}
   iocage: state=cloned clone_from='{{ testing_jails.template.tag }}' tag={{ production_jails.opensmtpd.tag }} properties="ip4_addr='{{ production_jails.opensmtpd.interface }}|{{ production_jails.opensmtpd.ip }}' boot=on allow_sysvipc=1 defaultrouter='{{ internal_ip }}' resolver='nameserver {{ internal_ip }}' host_hostname='{{ production_jails.opensmtpd.tag }}'"
@@ -37,18 +34,12 @@
   - opensmtpd_jail | failed
   tags:
   - iocage-jails
-  - iocage-opensmtpd
-  - smtp
-  - mail
 
 - name: Register jail's root diretory
-  stat: path='/iocage/tags/{{ production_jails.opensmtpd.tag }}/root/'
+  stat: path='{{ iocage_mountpoint.stdout_lines[0] }}/tags/{{ production_jails.opensmtpd.tag }}/root/'
   register: opensmtpd_jail_dir
   tags:
   - iocage-jails
-  - iocage-opensmtpd
-  - smtp
-  - mail
 
 - assert:
     that:
@@ -57,7 +48,3 @@
       - opensmtpd_jail_dir.stat.isdir
   tags:
   - iocage-jails
-  - iocage-opensmtpd
-  - smtp-debug
-  - smtp
-  - mail

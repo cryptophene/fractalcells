@@ -22,6 +22,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - include: iocage.yml
-- include: pgsql.yml
-- include: roles.yml
-- include: databases.yml
+  tags: ['postgresql-iocage', 'cells']
+- include: postgresql.yml
+  tags: ['postgresql-setup']
+  when: ansible_connection != "chroot"

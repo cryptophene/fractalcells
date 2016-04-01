@@ -42,7 +42,7 @@
   - issues
 
 - name: Register jail's root diretory
-  stat: path='/iocage/tags/{{ production_jails.redmine.tag }}/root/'
+  stat: path='{{ iocage_mountpoint.stdout_lines[0] }}/tags/{{ production_jails.redmine.tag }}/root/'
   register: redmine_jail_dir
   tags:
   - iocage-redmine

@@ -3,9 +3,6 @@
 - name: "{{ startup_delay_s | default(10) }}s delay while starting Jenkins"
   wait_for: host={{ production_jails.jenkins.ip }} port=8180 delay={{ startup_delay_s | default(10) }}
   when: jenkins_install.changed or jenkins_config.changed
-  tags:
-  - jenkins
-  - ci
 
 - name: Get Jenkins CLI
   get_url: url=http://{{ production_jails.jenkins.ip }}:8180/jnlpJars/jenkins-cli.jar dest={{ jenkins_jail_dir.stat.path }}/root/jenkins-cli.jar mode=0440
@@ -13,20 +10,11 @@
   until: "'OK' in jenkins_local_cli.msg or 'file already exists' in jenkins_local_cli.msg"
   retries: 5
   delay: 10
-  tags:
-  - jenkins
-  - ci
 
 - name: Get Jenkins updates
   get_url: url=https://updates.jenkins-ci.org/update-center.json dest={{ jenkins_jail_dir.stat.path }}/root/jenkins-updates.json thirsty=yes mode=0440 timeout=30 validate_certs=False
   register: jenkins_updates
-  tags:
-  - jenkins
-  - ci
 
 - name: Update-center Jenkins
   shell: "cat {{ jenkins_jail_dir.stat.path }}/root/jenkins-updates.json | sed '1d;$d' | curl -X POST -H 'Accept: application/json' -d @- http://{{ production_jails.jenkins.ip }}:8180/updateCenter/byId/default/postBack"
   when: jenkins_updates.changed
-  tags:
-  - jenkins
-  - ci

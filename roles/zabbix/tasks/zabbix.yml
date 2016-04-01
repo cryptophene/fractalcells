@@ -23,46 +23,24 @@
 ---
 - name: Make sure Zabbix jail is started
   iocage: state=started tag='{{ production_jails.zabbix.tag }}'
-  tags:
-  - zabbix
-  - monitoring
   register: zabbix_jail
 
 - name: Enable zabbix services
   when:
-  - "'uuid' in zabbix_jail and (zabbix_jail['uuid'] is defined and zabbix_jail['uuid'] != '-')"
+  - zabbix_jail|success
   lineinfile: dest={{ zabbix_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
   with_items:
   - { line: "zabbix_server_enable=\"YES\"" }
-  tags:
-  - zabbix
-  - monitoring
-
-- name: Deploy Zabbix repo config
-  template: src='{{ item.name }}.j2' dest='{{ zabbix_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
-  with_items:
-  - { name: "fractalcells.conf", path: "/etc/pkg", mode: 644 }
-  when:
-  - "'uuid' in zabbix_jail and (zabbix_jail['uuid'] is defined and zabbix_jail['uuid'] != '-')"
-  tags:
-  - zabbix
-  - monitoring
 
 - name: Install zabbix pkgs
   when:
-  - "'uuid' in zabbix_jail and (zabbix_jail['uuid'] is defined and zabbix_jail['uuid'] != '-')"
+  - zabbix_jail|success
   iocage: state=pkg tag={{ production_jails.zabbix.tag }} cmd="install -y {{ production_jails.zabbix.pkgs | join(' ') }}"
-  tags:
-  - zabbix
-  - monitoring
 
 - name: Create directories
   file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
-  tags:
-  - zabbix
-  - monitoring
   when:
-  - "'uuid' in zabbix_jail and (zabbix_jail['uuid'] is defined and zabbix_jail['uuid'] != '-')"
+  - zabbix_jail|success
   with_items:
   - { path: '{{ zabbix_jail_dir.stat.path }}/var/log/zabbix/', mode: '755', owner: 122, group: 122 }
 
@@ -72,17 +50,11 @@
   - { name: "zabbix_server.conf", path: "/usr/local/etc/zabbix24", mode: 644 }
   - { name: "authmethod_zabbix.sql", path: "/root", mode: 644 }
   when:
-  - "'uuid' in zabbix_jail and (zabbix_jail['uuid'] is defined and zabbix_jail['uuid'] != '-')"
-  tags:
-  - zabbix
-  - monitoring
+  - zabbix_jail|success
 
 - name: Find Zabbix db prepared cookie
   stat: path={{ zabbix_jail_dir.stat.path }}/root/.db.prepared
   register: zabbix_db_prepared_cookie
-  tags:
-  - zabbix
-  - monitoring
 - name: Load Zabbix DB schema SQL
   iocage: state=exec tag={{ production_jails.zabbix.tag }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ data.zabbix.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ data.zabbix.dbuser }} {{ data.zabbix.dbname }} < {{ item.path }} && touch /root/.db_prepared\" "
   with_items:
@@ -91,26 +63,14 @@
   - { path: "/usr/local/share/zabbix24/server/database/postgresql/data.sql" }
   when:
   - not zabbix_db_prepared_cookie.stat.exists
-  tags:
-  - zabbix
-  - monitoring
 
 - name: Start Zabbix server
   iocage: state=exec tag={{ zabbix_jail.uuid }} cmd="/bin/sh -c \"service zabbix_server restart\""
   when:
-  - "'uuid' in zabbix_jail and (zabbix_jail['uuid'] is defined and zabbix_jail['uuid'] != '-')"
-  tags:
-  - zabbix
-  - monitoring
+  - zabbix_jail|success
 
 - name: Load Zabbix Authmethod SQL
   iocage: state=exec tag={{ production_jails.zabbix.tag }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ data.zabbix.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ data.zabbix.dbuser }} {{ data.zabbix.dbname }} < /root/authmethod_zabbix.sql \""
-  tags:
-  - zabbix
-  - monitoring
 
 - name: Remove Zabbix Authmethod SQL
   file: path={{ zabbix_jail_dir.stat.path }}/root/authmethod_zabbix.sql state=absent
-  tags:
-  - zabbix
-  - monitoring

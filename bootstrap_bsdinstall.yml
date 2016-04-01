@@ -12,11 +12,17 @@
   - name: Remove repo configs
     raw: /bin/rm -f /etc/pkg/FreeBSD.conf /etc/pkg/HardenedBSD.conf
 
+  - name: create package dir
+    raw: mkdir -p /packages
+
+  - name: nullfsmount packages
+    local_action: shell umount /mnt/packages ;mount -t nullfs /packages /mnt/packages
+
   - name: Add Fractalcells config
-    raw: '/bin/sh -c "/bin/echo fractalcells: { url: http://pkg.fractalcells.com/packages/FreeBSD:10:amd64/, enabled: true, priority: 10 } > /etc/pkg/fractalcells.conf"'
+    raw: '/bin/sh -c "/bin/echo fractalcells: { url: file:///packages/FreeBSD:10:amd64, enabled: true, priority: 10 } > /etc/pkg/fractalcells.conf"'
 
   - name: Bootstrap pkg tool
-    raw: /usr/bin/env ASSUME_ALWAYS_YES=1 /usr/sbin/pkg bootstrap -f
+    raw: /usr/bin/env ASSUME_ALWAYS_YES=1 /usr/sbin/pkg add /packages/FreeBSD:10:amd64/All/pkg-1.6.4_1.txz
     when: pkg|failed
 
   - name: Install python and sudo so that ansible can run in non-raw mode

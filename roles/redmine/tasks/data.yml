@@ -1,0 +1,63 @@
+
+# Copyright 2015, Perceivon Hosting Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY PERCEIVON HOSTING INC. AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PERCEIVON HOSTING INC. OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+---
+- name: Find secret token
+  stat: path={{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/config/initializers/secret_token.rb
+  register: redmine_secret_token
+  tags:
+  - redmine
+  - issues
+
+- name: Generate Redmine secret token
+  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"cd /usr/local/www/redmine && bundle exec rake generate_secret_token\""
+  when:
+  - not redmine_secret_token.stat.exists
+
+- name: Find db cookie
+  stat: path={{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/.db.migrated
+  register: redmine_db_migrated_cookie
+
+- name: Generate Redmine database objects
+  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"cd /usr/local/www/redmine && RAILS_ENV=production bundle exec rake db:migrate && touch .db.migrated\""
+  when:
+  - not redmine_db_migrated_cookie.stat.exists
+
+- name: Find db defaults cookie
+  stat: path={{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/.db.defaults
+  register: redmine_db_defaults_cookie
+
+- name: Load Redmine database defaults
+  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"cd /usr/local/www/redmine && echo en | RAILS_ENV=production bundle exec rake redmine:load_default_data && touch .db.defaults\""
+  when:
+  - not redmine_db_defaults_cookie.stat.exists
+
+- name: Load Redmine Authmethod SQL
+  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ data.redmine.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ data.redmine.dbuser }} {{ data.redmine.dbname }} < /root/authmethod_redmine.sql \""
+
+- name: Remove Redmine Authmethod SQL
+  file: path={{ redmine_jail_dir.stat.path }}/root/authmethod_redmine.sql state=absent
+
+- name: Preload Redmine
+  shell: sleep 10 && fetch -o - http://{{ production_jails.redmine.ip }}:80/
+  ignore_errors: yes

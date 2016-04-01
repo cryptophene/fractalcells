@@ -25,8 +25,24 @@
  - name: Deploy ssh configuration
    template: src=sshd_config.j2 dest=/etc/ssh/sshd_config
    notify: restart sshd
-   tags: 
+   tags:
    - sshd
    - debug
 
+
+ - name: Touch /var/log/auth into existence
+   file: path=/var/log/auth.log state=touch
+   when:
+   - ansible_connection == "chroot"
+   tags:
+   - sshd
+   - debug
+
+ - name: bsdinstall Generate hostid
+   service: name=hostid_save state=started
+   when:
+   - ansible_connection == "chroot"
+   tags:
+   - sshd
+   - debug
 

@@ -27,73 +27,41 @@
 
   register: postgresql_user_present
   ignore_errors: true
-  tags:
-  - db
-  - pgsql
-  - pgsql-roles
 
 - name: Create PostgreSQL user
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE ROLE {{ data.postgresql.dbuser }} WITH SUPERUSER LOGIN CREATEDB CREATEROLE ENCRYPTED PASSWORD \\\'{{ data.postgresql.password }}\\\' | psql template1 \" "
   when:
   - postgresql_user_present | failed
-  tags:
-  - db
-  - pgsql
-  - pgsql-roles
 
 # redmine user
 - name: Check if creating {{ data.redmine.dbuser }} user is necessary
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT rolname FROM pg_roles WHERE rolname = \\\'{{ data.redmine.dbuser }}\\\' | psql template1 | grep {{ data.redmine.dbuser }}\" "
   register: redmine_user_present
   ignore_errors: true
-  tags:
-  - db
-  - pgsql
-  - pgsql-roles
 
 - name: Create Redmine user
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE ROLE {{ data.redmine.dbuser }} WITH LOGIN ENCRYPTED PASSWORD \\\'{{ data.redmine.password }}\\\' | psql template1 \" "
   when:
   - redmine_user_present | failed
-  tags:
-  - db
-  - pgsql
-  - pgsql-roles
 
 # zabbix user
 - name: Check if creating {{ data.zabbix.dbuser }} user is necessary
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT rolname FROM pg_roles WHERE rolname = \\\'{{ data.zabbix.dbuser }}\\\' | psql template1 | grep {{ data.zabbix.dbuser }}\" "
   register: zabbix_user_present
   ignore_errors: true
-  tags:
-  - db
-  - pgsql
-  - pgsql-roles
 
 - name: Create zabbix user
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE ROLE {{ data.zabbix.dbuser }} WITH LOGIN ENCRYPTED PASSWORD \\\'{{ data.zabbix.password }}\\\' | psql template1 \" "
   when:
   - zabbix_user_present | failed
-  tags:
-  - db
-  - pgsql
-  - pgsql-roles
 
 # gitlab user
 - name: Check if creating {{ data.gitlab.dbuser }} user is necessary
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT rolname FROM pg_roles WHERE rolname = \\\'{{ data.gitlab.dbuser }}\\\' | psql template1 | grep {{ data.gitlab.dbuser }}\" "
   register: gitlab_user_present
   ignore_errors: true
-  tags:
-  - db
-  - pgsql
-  - pgsql-roles
 
 - name: Create gitlab user
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE ROLE {{ data.gitlab.dbuser }} WITH LOGIN ENCRYPTED PASSWORD \\\'{{ data.gitlab.password }}\\\' | psql template1 \" "
   when:
   - gitlab_user_present | failed
-  tags:
-  - db
-  - pgsql
-  - pgsql-roles

@@ -21,11 +21,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
+dependencies:
+- role: postgresql-data
+- role: nginx_proxy
+
 - name: Make sure Gitlab jail is started
   iocage: state=started tag='{{ production_jails.gitlab.tag }}'
-  tags:
-  - gitlab
-  - code
   register: gitlab_jail
 
 - name: Enable Gitlab services
@@ -36,17 +37,11 @@
   - { line: "nginx_enable=\"YES\"" }
   - { line: "redis_enable=\"YES\"" }
   - { line: "gitlab_enable=\"YES\"" }
-  tags:
-  - gitlab
-  - code
 
 - name: Install Gitlab
   when:
   - "'uuid' in gitlab_jail and (gitlab_jail['uuid'] is defined and gitlab_jail['uuid'] != '-')"
   iocage: state=pkg tag={{ production_jails.gitlab.tag }} cmd="install -y {{ production_jails.gitlab.pkgs | join(' ') }}"
-  tags:
-  - gitlab
-  - code
 
 - name: Deploy Redis config
   when:
@@ -55,16 +50,10 @@
   with_items:
   - { line: "unixsocket /var/run/redis/redis.sock" }
   - { line: "unixsocketperm 770" }
-  tags:
-  - gitlab
-  - code
 
 
 - name: Create directories
   file: path='{{ gitlab_jail_dir.stat.path }}{{ item.path }}' state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
-  tags:
-  - gitlab
-  - code
   when:
   - "'uuid' in gitlab_jail and (gitlab_jail['uuid'] is defined and gitlab_jail['uuid'] != '-')"
   with_items:
@@ -79,9 +68,6 @@
   - { name: "unicorn.rb", path: "/usr/local/www/gitlab/config", mode: 644 }
   - { name: "authmethod_gitlab.sql", path: "/root", mode: 644 }
   - { name: "nginx.conf", path: "/usr/local/etc/nginx", mode: 644 }
-  tags:
-  - gitlab
-  - code
 
 - name: Deploy Gitlab secadm config
   template: src='{{ item.name }}.j2' dest='{{ gitlab_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
@@ -89,18 +75,12 @@
   - { name: "secadm.rules", path: "/usr/local/etc", mode: 644 }
   when:
   - host_os == 'HardenedBSD'
-  tags:
-  - gitlab
-  - code
 
 - name: Load secadm rules
   iocage: state=exec tag={{ gitlab_jail.uuid }} cmd="/bin/sh -c \"secadm load /usr/local/etc/secadm.rules\""
   when:
   - gitlab_jail | success
   - host_os == 'HardenedBSD'
-  tags:
-  - gitlab
-  - code
 
 - name: Start Gitlab nginx & redis
   iocage: state=exec tag={{ gitlab_jail.uuid }} cmd="/bin/sh -c \"{{ item.cmd }}\""
@@ -109,16 +89,10 @@
   - { cmd: "service redis restart" }
   when:
   - "'uuid' in gitlab_jail and (gitlab_jail['uuid'] is defined and gitlab_jail['uuid'] != '-')"
-  tags:
-  - gitlab
-  - code
 
 - name: Find db cookie
   stat: path={{ gitlab_jail_dir.stat.path }}/usr/local/www/gitlab/.db.setup
   register: gitlab_db_cookie
-  tags:
-  - gitlab
-  - code
 
 - name: Execute stuff
   iocage: state=exec tag={{ gitlab_jail.uuid }} user=root cmd="/bin/sh -c \"{{ item.cmd }}\""
@@ -133,34 +107,19 @@
   - { cmd: "pw groupmod redis -m git" }
   when:
   - not gitlab_db_cookie.stat.exists
-  tags:
-  - gitlab
-  - code
 
 - name: Load Gitlab Authmethod SQL
   iocage: state=exec tag={{ gitlab_jail.uuid }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ data.gitlab.password }}' psql -h {{ production_jails.postgresql.ip }} -U {{ data.gitlab.dbuser }} {{ data.gitlab.dbname }} < /root/authmethod_gitlab.sql \""
-  tags:
-  - gitlab
-  - code
 
 - name: Remove Gitlab Authmethod SQL
   file: path={{ gitlab_jail_dir.stat.path }}/root/authmethod_gitlab.sql state=absent
-  tags:
-  - gitlab
-  - code
 - name: Start Gitlab
   iocage: state=exec tag={{ gitlab_jail.uuid }} cmd="/bin/sh -c \"{{ item.cmd }}\""
   with_items:
   - { cmd: "service gitlab restart" }
   when:
   - "'uuid' in gitlab_jail and (gitlab_jail['uuid'] is defined and gitlab_jail['uuid'] != '-')"
-  tags:
-  - gitlab
-  - code
 #
 - name: Preload Gitlab
   shell: sleep 10 && fetch -o - http://{{ production_jails.gitlab.ip }}:80/
   ignore_errors: yes
-  tags:
-  - gitlab
-  - code

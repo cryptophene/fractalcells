@@ -8,6 +8,9 @@
   - unbound
   - pkg-server
 
+- name: Touch resolv.conf
+  file: path=/etc/resolv.conf state=touch
+
 - name: Set unbound to nameserver.
   lineinfile: dest=/etc/resolv.conf line={{ item.line }}
   with_items:

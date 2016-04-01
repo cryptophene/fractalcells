@@ -22,35 +22,56 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - name: Check if zpool is configured for iocage
-  stat: path=/iocage/.default
+  shell: /sbin/zfs get mountpoint {{ iocage_zpool }}/iocage
+  ignore_errors: true
   register: zpool_activated
   tags:
   - iocage-comb
-  notify: check if iocage release was fetched
+  - jenkins
+  - iocage-cell
 
 - name: Mark zpool for iocage usage
-  shell:  iocage activate {{ iocage_zpool }}
+  shell: iocage activate {{ iocage_zpool }}
   when:
-  - not zpool_activated.stat.exists
-  - ansible_connection != "chroot"
+  - zpool_activated | failed
+  register: zpool_activated
   tags:
   - iocage-comb
 
-- name: bsdinstall Mark zpool for iocage usage
-  local_action: shell iocage activate {{ iocage_zpool }}
+- name: Register iocage mountpoint
+  shell: /sbin/zfs get -H mountpoint {{ iocage_zpool }}/iocage | awk '{print $3}'
+  register: iocage_mountpoint
   when:
-  - not zpool_activated.stat.exists
-  - ansible_connection == "chroot"
+  - zpool_activated | success
   tags:
   - iocage-comb
+  - jenkins
+  - iocage-cell
 
 - name: Check if we can skip downloading the release
-  stat: path='{{ iocage_releases_dir }}/{{ iocage_release_version }}'
+  stat: path='{{iocage_mountpoint.stdout_lines[0] }}{{ iocage_releases_dir }}/{{ iocage_release_version }}'
   register: release_dir
   tags:
   - iocage-comb
   - pkg-server
 
+- name: bsdinstall Prepare target area
+  file: path=/usr/freebsd-dist state=directory
+  when: 
+  - ansible_connection == "chroot"
+  tags: 
+  - iocage-comb
+
+- name: bsdinstall Copy files
+  copy: src=/usr/freebsd-dist/{{ item.name }} dest=/usr/freebsd-dist/{{ item.name }}
+  with_items:
+  - { name: "src.txz" }
+  - { name: "base.txz" }
+  when: 
+  - ansible_connection == "chroot"
+  tags: 
+  - iocage-comb
+  
 - name: Fetch {{ host_os }} release {{ iocage_release_version }}
   shell: echo "{{ iocage_release_version }}" | /usr/local/sbin/iocage fetch ftpfiles="{{ iocage_ftp_files}}"  ftphost="{{ iocage_ftp_host }}" ftpdir="{{ iocage_ftp_dir }}"
 
@@ -62,7 +83,7 @@
   - pkg-server
 
 - name: bsdinstall Fetch {{ host_os }} release {{ iocage_release_version }}
-  local_action: shell echo "{{ iocage_release_version }}" | /usr/local/sbin/iocage fetch ftpfiles="{{ iocage_ftp_files }}"  ftplocaldir=/usr/freebsd-dist
+  shell: echo "{{ iocage_release_version }}" | /usr/local/sbin/iocage fetch ftpfiles="{{ iocage_ftp_files }}"  ftplocaldir=/usr/freebsd-dist
 
   when: 
   - release_dir.stat.isdir is undefined
@@ -72,16 +93,16 @@
   - pkg-server
 
 - name: Check if it is now present
-  stat: path='{{ iocage_releases_dir }}/{{ iocage_release_version }}'
+  stat: path='{{ iocage_mountpoint.stdout_lines[0] }}{{ iocage_releases_dir }}/{{ iocage_release_version }}'
   when: release_dir.stat.isdir is undefined
   tags:
     - iocage-comb
   register: release_dir
 
 - name: Create pkglist file
+  copy: src=pkglist.txt dest='{{ iocage_mountpoint.stdout_lines[0] }}{{ iocage_jails_dir }}/pkglist.txt'
   tags:
   - iocage-comb
-  copy: src=pkglist.txt dest='{{ iocage_jails_dir }}/pkglist.txt'
 
 - name: Enable iocage service
   tags:

@@ -22,4 +22,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - include: iocage.yml
+  tags: ['nginx_internal-iocage', 'cells']
 - include: nginx.yml
+  tags: ['nginx_internal-setup']
+  when: ansible_connection != "chroot"

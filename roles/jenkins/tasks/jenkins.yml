@@ -21,32 +21,26 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
+dependencies:
+- role: nginx_proxy
+
 - name: Make sure Jenkins jail is started
   iocage: state=started tag='{{ production_jails.jenkins.tag }}'
-  tags:
-  - jenkins
-  - ci
   register: jenkins_jail
 
 - name: Enable jenkins services
   when:
-  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
+  - jenkins_jail|success
   lineinfile: dest={{ jenkins_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
   with_items:
   - { line: "jenkins_enable=\"YES\"" }
   - { line: "jenkins_args=\"--webroot=/usr/local/jenkins/war --httpPort=8180 --prefix=/\"" }
-  tags:
-  - jenkins
-  - ci
 
 - name: Install jenkins pkgs
   when:
   - jenkins_jail | success
   iocage: state=pkg tag={{ production_jails.jenkins.tag }} cmd="install -y {{ production_jails.jenkins.pkgs | join(' ') }}"
   register: jenkins_install
-  tags:
-  - jenkins
-  - ci
 
 - name: Deploy Jenkins secadm config
   template: src='{{ item.name }}.j2' dest='{{ jenkins_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644 owner=818 group=818
@@ -54,58 +48,37 @@
   - { name: "secadm.rules", path: "/usr/local/etc", mode: 644 }
   when:
   - host_os == 'HardenedBSD'
-  tags:
-  - jenkins
-  - ci
 
 - name: Load secadm rules
   iocage: state=exec tag={{ jenkins_jail.uuid }} cmd="/bin/sh -c \"secadm load /usr/local/etc/secadm.rules\""
   when:
   - jenkins_jail | success
   - host_os == 'HardenedBSD'
-  tags:
-  - jenkins
-  - ci
 
 - name: Restart Jenkins
   iocage: state=exec tag={{ jenkins_jail.uuid }} cmd="/bin/sh -c \"service jenkins restart\""
   when:
   - jenkins_jail | success
-  tags:
-  - jenkins
-  - ci
 
 - name: Create directories
   file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
-  tags:
-  - jenkins
-  - ci
   when:
-  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
+  - jenkins_jail|success
   with_items:
   - { path: '{{ jenkins_jail_dir.stat.path }}/usr/local/jenkins/', mode: '755', owner: 818, group: 818 }
 
 - name: Preload Jenkins
   shell: sleep 60 && fetch -o - http://{{ production_jails.jenkins.ip }}:8180/ >/dev/null
   ignore_errors: yes
-  tags:
-  - jenkins
-  - ci
 
 - name: Find LDAP keyed password cookie
   stat: path={{ jenkins_jail_dir.stat.path }}/usr/local/jenkins/.pw.salted
   register: jenkins_pw_salted_cookie
-  tags:
-  - jenkins
-  - ci
 
 - name: Obtain LDAP keyed password
   shell:  curl -d 'script=import hudson.util.Secret;def secret = Secret.fromString("{{ config.openldap.manager_password }}");println(secret.getEncryptedValue())' http://{{ production_jails.jenkins.ip }}:8180/scriptText/
   when: not jenkins_pw_salted_cookie.stat.exists
   register: jenkins_ldap_hash
-  tags:
-  - jenkins
-  - ci
 
 - name: Deploy Jenkins configs Pt. I
   template: src='{{ item.name }}.j2' dest='{{ jenkins_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644 owner=818 group=818
@@ -115,13 +88,7 @@
   - { name: "hudson.tasks.Mailer.xml", path: "/usr/local/jenkins", mode: 644 }
   when: not jenkins_pw_salted_cookie.stat.exists
   register: jenkins_configs
-  tags:
-  - jenkins
-  - ci
 
 - name: Touch Jenkins .pw.salted file
   file: path="{{ jenkins_jail_dir.stat.path }}/usr/local/jenkins/.pw.salted" mode=644 owner=root group=wheel state=touch
   when: not jenkins_pw_salted_cookie.stat.exists
-  tags:
-  - jenkins
-  - ci

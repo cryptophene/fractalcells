@@ -22,4 +22,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - include: iocage.yml
+  tags: ['zabbix-iocage', 'cells']
 - include: zabbix.yml
+  tags: ['zabbix-setup']
+  when: ansible_connection != "chroot"

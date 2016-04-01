@@ -2,45 +2,25 @@
   iocage: state=exec tag={{ jenkins_jail.uuid }} cmd="/bin/sh -c \"java -jar /root/jenkins-cli.jar -s http://{{ production_jails.jenkins.ip }}:8180/ list-plugins | cut -f 1 -d ' ' \" "
   when: jenkins.plugins is defined
   register: plugins_installed
-  tags:
-  - jenkins
-  - jenkins-debug
-  - ci
 
 - name: Install/update plugins
   iocage: state=exec tag={{ jenkins_jail.uuid }} cmd="/bin/sh -c \"java -jar /root/jenkins-cli.jar -s http://{{ production_jails.jenkins.ip }}:8180/ install-plugin {{ item }} \" "
   when: plugins_installed.changed and plugins_installed.stdout.find('{{ item }}') == -1
   with_items: jenkins.plugins
   ignore_errors: yes
-  tags:
-  - jenkins
-  - jenkins-debug
-  - ci
 
 - name: List plugins to be updated
   iocage: state=exec tag={{ jenkins_jail.uuid }} cmd="/bin/sh -c \"java -jar /root/jenkins-cli.jar -noKeyAuth -s http://{{ production_jails.jenkins.ip }}:8180/ list-plugins | grep ')$' | cut -f 1 -d ' ' | awk 1 ORS=' '\" "
   register: plugins_updates
-  tags:
-  - jenkins
-  - jenkins-debug
-  - ci
 
 - name: Update plugins
   iocage: state=exec tag={{ jenkins_jail.uuid }} cmd="/bin/sh -c \"java -jar /root/jenkins-cli.jar -s http://{{ production_jails.jenkins.ip }}:8180/ install-plugin {{ item }}\" "
   with_items: plugins_updates.stdout.split()
   when: plugins_updates.stdout != ''
   ignore_errors: yes
-  tags:
-  - jenkins
-  - jenkins-debug
-  - ci
 
 - name: Restart Jenkins
   iocage: state=exec tag={{ jenkins_jail.uuid }} cmd="/bin/sh -c \"service jenkins restart\" "
   when:
-  - "'uuid' in jenkins_jail and (jenkins_jail['uuid'] is defined and jenkins_jail['uuid'] != '-')"
-  tags:
-  - jenkins
-  - jenkins-debug
-  - ci
+  - jenkins_jail|success
 

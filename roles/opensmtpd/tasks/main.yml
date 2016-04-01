@@ -22,4 +22,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
 - include: iocage.yml
-- include: smtpd.yml
+  tags: ['opensmtpd-iocage', 'cells']
+- include: opensmtpd.yml
+  tags: ['opensmtpd-setup']
+  when: ansible_connection != "chroot"

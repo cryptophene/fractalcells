@@ -29,54 +29,30 @@
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT datname FROM pg_database WHERE datname = \\\'{{ data.redmine.dbname }}\\\' | psql template1 | grep {{ data.redmine.dbname }}\" "
   register: redmine_db_present
   ignore_errors: true
-  tags:
-  - db
-  - pgsql
-  - pgsql-dbs
 
 - name: Create {{ data.redmine.dbname }} database
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE DATABASE {{ data.redmine.dbname }} WITH OWNER = {{ data.redmine.dbuser }} | psql template1 \" "
   when:
   - redmine_db_present | failed
-  tags:
-  - db
-  - pgsql
-  - pgsql-dbs
 
 # zabbix
 - name: Check if creating {{ data.zabbix.dbname }} database is necessary
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT datname FROM pg_database WHERE datname = \\\'{{ data.zabbix.dbname }}\\\' | psql template1 | grep {{ data.zabbix.dbname }}\" "
   register: zabbix_db_present
   ignore_errors: true
-  tags:
-  - db
-  - pgsql
-  - pgsql-dbs
 
 - name: Create {{ data.zabbix.dbname }} database
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE DATABASE {{ data.zabbix.dbname }} WITH OWNER = {{ data.zabbix.dbuser }} | psql template1 \" "
   when:
   - zabbix_db_present | failed
-  tags:
-  - db
-  - pgsql
-  - pgsql-dbs
 
 # gitlab
 - name: Check if creating {{ data.gitlab.dbname }} database is necessary
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo SELECT datname FROM pg_database WHERE datname = \\\'{{ data.gitlab.dbname }}\\\' | psql template1 | grep {{ data.gitlab.dbname }}\" "
   register: gitlab_db_present
   ignore_errors: true
-  tags:
-  - db
-  - pgsql
-  - pgsql-dbs
 
 - name: Create {{ data.gitlab.dbname }} database
   iocage: state=exec tag={{ postgresql_jail.uuid }} user=pgsql cmd="/bin/sh -c \"echo CREATE DATABASE {{ data.gitlab.dbname }} WITH OWNER = {{ data.gitlab.dbuser }} | psql template1 \" "
   when:
   - gitlab_db_present | failed
-  tags:
-  - db
-  - pgsql
-  - pgsql-dbs

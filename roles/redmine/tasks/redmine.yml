@@ -21,11 +21,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ---
+dependencies:
+- role: postgresql-data
+- role: nginx_proxy
+
 - name: Make sure Redmine jail is started
   iocage: state=started tag='{{ production_jails.redmine.tag }}'
-  tags:
-  - redmine
-  - issues
   register: redmine_jail
 
 - name: Enable redmine services
@@ -34,33 +35,14 @@
   lineinfile: dest={{ redmine_jail_dir.stat.path }}/etc/rc.conf state=present insertafter=EOF line="{{ item.line }}"
   with_items:
   - { line: "nginx_enable=\"YES\"" }
-  tags:
-  - redmine
-  - issues
-
-- name: Deploy Redmine repo config
-  template: src='{{ item.name }}.j2' dest='{{ redmine_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
-  with_items:
-  - { name: "fractalcells.conf", path: "/etc/pkg", mode: 644 }
-  when:
-  - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
-  tags:
-  - redmine
-  - issues
 
 - name: Install redmine 
   when:
   - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
   iocage: state=pkg tag={{ production_jails.redmine.tag }} cmd="install -y {{ production_jails.redmine.pkgs | join(' ') }}"
-  tags:
-  - redmine
-  - issues
 
 - name: Create directories
   file: path={{ item.path }} state=directory mode={{ item.mode }} owner={{ item.owner }} group={{ item.group }}
-  tags:
-  - redmine
-  - issues
   when:
   - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
   with_items:
@@ -74,9 +56,6 @@
 
 - name: Create Redmine production.log file
   file: path="{{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/log/production.log" mode=666 owner=www group=www state=touch
-  tags:
-  - redmine
-  - issues
 
 - name: Deploy Redmine configs
   template: src='{{ item.name }}.j2' dest='{{ redmine_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644
@@ -88,9 +67,6 @@
   - { name: "authmethod_redmine.sql", path: "/root", mode: 644 }
   when:
   - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
-  tags:
-  - redmine
-  - issues
 
 - name: Deploy Redmine secadm config
   template: src='{{ item.name }}.j2' dest='{{ redmine_jail_dir.stat.path }}/{{ item.path }}/{{ item.name }}' mode=0644 owner=818 group=818
@@ -115,70 +91,6 @@
   iocage: state=exec tag={{ redmine_jail.uuid }} cmd="/bin/sh -c \"service nginx restart\""
   when:
   - "'uuid' in redmine_jail and (redmine_jail['uuid'] is defined and redmine_jail['uuid'] != '-')"
-  tags:
-  - redmine
-  - issues
-
-- name: Find secret token
-  stat: path={{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/config/initializers/secret_token.rb
-  register: redmine_secret_token
-  tags:
-  - redmine
-  - issues
-
-- name: Generate Redmine secret token
-  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"cd /usr/local/www/redmine && bundle exec rake generate_secret_token\""
-  when:
-  - not redmine_secret_token.stat.exists
-  tags:
-  - redmine
-  - issues
-
-- name: Find db cookie
-  stat: path={{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/.db.migrated
-  register: redmine_db_migrated_cookie
-  tags:
-  - redmine
-  - issues
-
-- name: Generate Redmine database objects
-  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"cd /usr/local/www/redmine && RAILS_ENV=production bundle exec rake db:migrate && touch .db.migrated\""
-  when:
-  - not redmine_db_migrated_cookie.stat.exists
-  tags:
-  - redmine
-  - issues
-
-- name: Find db defaults cookie
-  stat: path={{ redmine_jail_dir.stat.path }}/usr/local/www/redmine/.db.defaults
-  register: redmine_db_defaults_cookie
-  tags:
-  - redmine
-  - issues
-
-- name: Load Redmine database defaults
-  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"cd /usr/local/www/redmine && echo en | RAILS_ENV=production bundle exec rake redmine:load_default_data && touch .db.defaults\""
-  when:
-  - not redmine_db_defaults_cookie.stat.exists
-  tags:
-  - redmine
-  - issues
-
-- name: Load Redmine Authmethod SQL
-  iocage: state=exec tag={{ redmine_jail.uuid }} user=root cmd="/bin/sh -c \"PGPASSWORD='{{ data.redmine.password}}' psql -h {{ production_jails.postgresql.ip }} -U {{ data.redmine.dbuser }} {{ data.redmine.dbname }} < /root/authmethod_redmine.sql \""
-  tags:
-  - redmine
-  - issues
-
-- name: Remove Redmine Authmethod SQL
-  file: path={{ redmine_jail_dir.stat.path }}/root/authmethod_redmine.sql state=absent
-  tags:
-  - redmine
-  - issues
-
-- name: Preload Redmine
-  shell: sleep 10 && fetch -o - http://{{ production_jails.redmine.ip }}:80/
-  ignore_errors: yes
   tags:
   - redmine
   - issues

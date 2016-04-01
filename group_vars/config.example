@@ -1,8 +1,6 @@
 external_domain:          'your.company.tld'
 
 config:
-  host:
-    sshd_port:           '22'
   openldap:
     server_name:         '<your company> Directory Server'
     manager_password:    'furthers3cret'
