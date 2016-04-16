@@ -7,6 +7,12 @@ Documentation: to be written^Wimproved.
 Please see [the #fractalcells website](http://www.fractalcells.com) for the "Why" and "What".
 This README is, for the time being, exclusively about the "How"
 
+## Branches
+
+1. `master` - "production" branch. Hopefully as stable as `X.Y-RELEASE`.
+1. `develop` - "experimental" branch. Hopefully as stable as `11.0-CURRENT`.
+1. `feature/<feature_name>` - bleeding edge feature branches. Use at your own enjoyment.
+
 ## Requirements
 
 You may want to use the following software, and know your way around them before evaluating
