@@ -25,6 +25,7 @@
   register: grouplist
 - group: name={{ item }}
   with_items: "{{ grouplist.stdout_lines }}"
+  ignore_errors: true
 - name: Install privileged user
   user: name={{ user.handle }} shell={{ user.shell }} groups={{ user.groups }} append=yes
 - name: Deploy authorized key
@@ -32,3 +33,4 @@
   tags:
   - comb-misc
   - pkg-server
+  ignore_errors: true

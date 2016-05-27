@@ -26,18 +26,22 @@
   become_method: sudo
   #strategy: free
   #accelerate: true
+  pre_tasks:
+    - name: disable fingerprint checking that may be enabled; when enabled, causes ssh issues
+      command: authconfig --disablefingerprint --update
+      become: yes
   roles:
     - comb
     - certs
     - cell
     - logging
     - postgresql
-    - opensmtpd
-    - openldap
+#    - opensmtpd
+#    - openldap
     - nginx_proxy
     - nginx_internal
-    - redmine
-    - zabbix
-    - jenkins
-    - openvpn
+#    - redmine
+#    - zabbix
+#    - jenkins
+#    - openvpn
     - gitlab

@@ -1,0 +1,74 @@
+---
+certificate_authority:
+  certificate_directory:                /usr/local/share/certs
+  short_name:                           'foobar'
+  root:
+    output_password:                    'supersecr1t'
+    default_bits:                       4096
+    common_name:                        '<Cyc> Root Certificate Authority'
+    email_address:                      'reg@cyc.com'
+    challenge_password:                 'hyperssecr1t'
+  intermediate:
+    output_password:                    'secr1t'
+    default_bits:                       4096
+    common_name:                        '<Cyc> Intermediate Certificate Authority'
+    email_address:                      'reg@cyc.com'
+    challenge_password:                 'notlesssecr1t'
+  proxy:
+    common_name:                        '{{ external_domain }}'
+    organizational_unit:                '<Cyc>'
+    default_bits:                       4096
+    output_password:                    'still_secr1t'
+    email_address:                      'info@cyc.com'
+    challenge_password:                 'moarsecr1t'
+  country:                              'US'
+  state:                                'CA'
+  locality:                             'Palo Alto'
+  organization:                         'Cyc'
+  organizational_unit:                  'Cyc Certificate Authority'
+external_domain:          'itgitlab.cyc.local'
+
+config:
+  host:
+    sshd_port:           '22'
+#  openldap:
+#    server_name:         'Acme Corporation Directory Server'
+#    manager_password:    'pinky_is_awesome'
+#  smtpd:
+#    user:                 'pinky'
+#    password:             'so_aweosme'
+#    email:                'chris@acme.com'
+#    relay:
+#      hostname:           'smtp-c.acme.com'
+#      port:               587
+#  zabbix:
+#    password:             '1234'
+  gitlab:
+    secrets:              '9876'
+    root_password:        'tFKyt8bet/Js0h6pKfISsJjuHV9TGs8E+lF2PLoZ6m4'
+  openvpn:
+    dhparam_strength: 1024
+data:
+  postgresql:
+    dbuser:       'postgres'
+    password:     'u/q92m9bd+95PtiCbpA6yOrAVcBWiZyLAQwUtWX4Gmo'
+#  redmine:
+#    dbname:       'redminedb'
+#    dbuser:       'redmine_dbuser'
+#    password:     'QbhiotM'
+#  zabbix:
+#    dbname:       'zabbix'
+#    dbuser:       'zabbix'
+#    password:     'iVPnz2K'
+  gitlab:
+    dbname:       'gitlab'
+    dbuser:       'gitlab'
+    password:     'auiWOp6/tUMeZ35/CxgrzEPN1YYe7DvDceIWDVTZj3o'
+user:
+  handle:       'chris'
+  id:           '1000'
+  name:         'Christian Meier'
+  groups:       'chris,wheel'
+  shell:        '/bin/sh'
+  password:     'tI565JIO3zXVVH6UI0xZP75+jNq9Op8ZvWEP0Xbt6/k'
+  ssh_pub_key:  'ssh-rsa AAAAB... chris@root.com'

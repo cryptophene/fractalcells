@@ -26,6 +26,7 @@
   
   - name: Deploy rudimentary sudoers file.
     script: "/bin/echo %wheel ALL=\\(ALL\\) ALL > /usr/local/etc/sudoers.d/fractalcells"
+    ignore_errors: true
 
 - hosts: all
   become: yes

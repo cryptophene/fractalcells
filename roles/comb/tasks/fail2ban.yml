@@ -25,7 +25,7 @@
   with_items:
           - { line: "fail2ban_enable=\"YES\"" }
   tags:
-  - fail2ban
+  - py27-fail2ban
   - pkg-server
 
 - name: Deploy fail2ban sshd-pf.local
